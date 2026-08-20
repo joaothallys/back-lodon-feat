@@ -1,18 +1,46 @@
+const fs = require("node:fs");
 const http = require("node:http");
+const path = require("node:path");
 const { loadEnv } = require("./load-env");
-const { CORS, json, applyCors } = require("./lib/http");
-const exercises = require("./modules/exercises/routes");
-const media = require("./modules/media/routes");
+const { CORS, json, fail, applyCors } = require("./lib/http");
 
 loadEnv(".env");
 
+const { pool } = require("./db/pool");
+
+const modules = [
+  require("./modules/auth/routes"),
+  require("./modules/profile/routes"),
+  require("./modules/membership/routes"),
+  require("./modules/locations/routes"),
+  require("./modules/plans/routes"),
+  require("./modules/workouts/routes"),
+  require("./modules/sessions/routes"),
+  require("./modules/library/routes"),
+  require("./modules/exercises/routes"),
+  require("./modules/media/routes")
+];
+
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
+const DOCS_PATH = path.join(__dirname, "docs", "index.html");
 
 async function handleApi(req, res, url) {
-  if (await media.handle(req, res, url)) return;
-  const handled = await exercises.handle(req, res, url);
-  if (handled === false) json(res, 404, { success: false, error: "not found" });
+  for (const mod of modules) {
+    const handled = await mod.handle(req, res, url);
+    if (handled !== false) return;
+  }
+  json(res, 404, { success: false, error: "not found" });
+}
+
+function sendDocs(res) {
+  const html = fs.readFileSync(DOCS_PATH);
+  res.writeHead(200, {
+    "Content-Type": "text/html; charset=utf-8",
+    "Content-Length": html.length,
+    ...CORS
+  });
+  res.end(html);
 }
 
 const server = http.createServer(async (req, res) => {
@@ -24,17 +52,28 @@ const server = http.createServer(async (req, res) => {
       res.end();
       return;
     }
-    if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) {
-      json(res, 200, { ok: true });
-      return;
+    if (req.method === "GET" && (url.pathname === "/docs" || url.pathname === "/docs/")) {
+      return sendDocs(res);
     }
-    if (url.pathname.startsWith("/api/")) return handleApi(req, res, url);
+    if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) {
+      let db = false;
+      try {
+        await pool.query("SELECT 1");
+        db = true;
+      } catch (_) {}
+      return json(res, db ? 200 : 503, { ok: db, db, service: "london-fitness-api" });
+    }
+    if (url.pathname.startsWith("/api/")) return await handleApi(req, res, url);
     json(res, 404, { success: false, error: "not found" });
   } catch (err) {
-    json(res, 500, { success: false, error: err.message || "server error" });
+    if (err.status) return fail(res, err.status, err.message);
+    const down = err.code === "ENOTFOUND" || err.code === "ECONNREFUSED" || err.code === "ETIMEDOUT";
+    console.error(err);
+    json(res, down ? 503 : 500, { success: false, error: down ? "banco indisponível" : (err.message || "server error") });
   }
 });
 
 server.listen(PORT, HOST, () => {
-  console.log("API  http://" + HOST + ":" + PORT);
+  console.log("API   http://" + HOST + ":" + PORT);
+  console.log("Docs  http://" + HOST + ":" + PORT + "/docs");
 });

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>London Fitness API — Documentação</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b0d10;
+      --bg-2: #10141a;
+      --card: #161b22;
+      --line: #243043;
+      --text: #f3efe6;
+      --muted: #9aa6b8;
+      --gold: #e8b86d;
+      --gold-2: #f3d39a;
+      --get: #3dd6c6;
+      --post: #6ea8ff;
+      --put: #f0c14b;
+      --delete: #ff7a7a;
+      --ok: #7ee0a8;
+      --shadow: 0 20px 50px rgba(0,0,0,.35);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: "Instrument Sans", sans-serif; }
+    body { min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
+    code, pre { font-family: "JetBrains Mono", ui-monospace, monospace; }
+    .app { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+    aside {
+      position: sticky; top: 0; height: 100vh; overflow: auto;
+      background: linear-gradient(180deg, #12171f 0%, #0d1117 100%);
+      border-right: 1px solid var(--line); padding: 28px 20px 40px;
+    }
+    .brand { display: flex; gap: 12px; align-items: center; margin-bottom: 28px; }
+    .mark {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: radial-gradient(circle at 30% 20%, var(--gold-2), var(--gold));
+      color: #2a1c08; font-weight: 800; display: grid; place-items: center;
+    }
+    .brand small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .search {
+      width: 100%; background: #0c1016; border: 1px solid var(--line); color: var(--text);
+      border-radius: 10px; padding: 10px 12px; margin-bottom: 22px; outline: none;
+    }
+    .search:focus { border-color: var(--gold); }
+    .nav-group { margin-bottom: 18px; }
+    .nav-group h4 { margin: 0 0 8px; color: var(--muted); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+    .nav-group a { display: block; padding: 7px 8px; border-radius: 8px; color: #d7deea; font-size: 14px; }
+    .nav-group a:hover, .nav-group a.active { background: #1b2330; color: var(--gold-2); }
+    main { padding: 48px 56px 80px; max-width: 1080px; }
+    .hero {
+      background:
+        radial-gradient(circle at 90% 10%, rgba(232,184,109,.16), transparent 28%),
+        linear-gradient(180deg, #171d27, #12171f);
+      border: 1px solid var(--line); border-radius: 24px; padding: 36px;
+      box-shadow: var(--shadow); margin-bottom: 36px;
+    }
+    .hero h1 { margin: 0 0 10px; font-size: 42px; letter-spacing: -.03em; }
+    .hero p { color: var(--muted); max-width: 720px; line-height: 1.6; }
+    .pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+    .pill { border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; font-size: 12px; color: var(--muted); }
+    section { margin: 48px 0; }
+    h2 { font-size: 28px; margin: 0 0 8px; }
+    .lead { color: var(--muted); margin: 0 0 22px; line-height: 1.6; }
+    .card {
+      background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+      padding: 18px 18px 8px; margin-bottom: 16px;
+    }
+    .route-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .method {
+      font-size: 11px; font-weight: 700; letter-spacing: .06em; border-radius: 999px;
+      padding: 5px 8px; min-width: 62px; text-align: center;
+    }
+    .GET { background: rgba(61,214,198,.14); color: var(--get); }
+    .POST { background: rgba(110,168,255,.14); color: var(--post); }
+    .PUT { background: rgba(240,193,75,.14); color: var(--put); }
+    .DELETE { background: rgba(255,122,122,.14); color: var(--delete); }
+    .path { font-size: 14px; }
+    .auth-badge { margin-left: auto; font-size: 11px; color: var(--gold); border: 1px solid rgba(232,184,109,.3); padding: 4px 8px; border-radius: 999px; }
+    .auth-badge.public { color: var(--ok); border-color: rgba(126,224,168,.3); }
+    .card p { color: var(--muted); font-size: 14px; line-height: 1.55; }
+    pre {
+      background: #0c1016; border: 1px solid #222a37; border-radius: 12px;
+      padding: 14px; overflow: auto; color: #d7e0ee; font-size: 12px; line-height: 1.55;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 10px 0 16px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #243043; vertical-align: top; }
+    th { color: var(--muted); font-size: 12px; font-weight: 600; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      aside { position: relative; height: auto; }
+      main { padding: 28px 18px 60px; }
+      .grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 32px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand">
+        <div class="mark">LF</div>
+        <div>
+          <strong>London Fitness</strong>
+          <small>API v1 · Postgres</small>
+        </div>
+      </div>
+      <input class="search" id="search" placeholder="Buscar rota, área ou campo..." />
+      <nav id="nav"></nav>
+    </aside>
+    <main>
+      <div class="hero">
+        <div class="pill">Base URL · mesma origem do backend</div>
+        <h1>Documentação da API</h1>
+        <p>
+          Backend da Academia London Fitness. Cobre conta, perfil, matrícula, locais,
+          fichas, plano da semana, execução série a série e histórico.
+          Senha nunca é gravada em texto — apenas hash bcrypt.
+        </p>
+        <div class="pills">
+          <span class="pill">JWT + refresh</span>
+          <span class="pill">PostgreSQL</span>
+          <span class="pill">Soft delete em fichas</span>
+          <span class="pill">1 plano ativo / usuário</span>
+          <span class="pill">1 sessão in_progress</span>
+        </div>
+      </div>
+
+      <section id="intro">
+        <h2>Como autenticar</h2>
+        <p class="lead">
+          Envie o access token em todas as rotas privadas.
+          O access token expira em 15 minutos. Use <code>POST /api/auth/refresh</code> para renovar.
+        </p>
+        <pre>Authorization: Bearer &lt;accessToken&gt;
+Content-Type: application/json</pre>
+        <div class="grid">
+          <div class="card">
+            <h3>Resposta padrão</h3>
+            <pre>{
+  "success": true,
+  "data": {}
+}</pre>
+          </div>
+          <div class="card">
+            <h3>Erro</h3>
+            <pre>{
+  "success": false,
+  "error": "token ausente"
+}</pre>
+          </div>
+        </div>
+        <p class="lead">
+          IDs de exercício usam o catálogo London (<code>exerciseId</code>), não só o <code>sourceId</code> da ExerciseDB.
+          Login atual do app (só e-mail) deve passar a enviar também <code>password</code>.
+        </p>
+      </section>
+
+      <div id="content"></div>
+    </main>
+  </div>
+
+<script>
+const groups = [
+  {
+    id: "auth",
+    title: "Autenticação",
+    lead: "Registro, login, refresh e sessão. No cadastro já nascem perfil e uma matrícula padrão com o primeiro plano/unidade ativos.",
+    routes: [
+      {
+        method: "POST", path: "/api/auth/register", auth: false,
+        desc: "Cria usuário, perfil e matrícula inicial. Senha com no mínimo 6 caracteres, persistida como bcrypt.",
+        body: { email: "ana@london.com", password: "senha123", name: "Ana Souza", phone: "11999999999", device: "ios" },
+        out: { success: true, accessToken: "jwt", refreshToken: "hex", tokenType: "Bearer", expiresIn: 900, data: { id: "uuid", email: "ana@london.com", profile: { name: "Ana Souza" } } }
+      },
+      {
+        method: "POST", path: "/api/auth/login", auth: false,
+        desc: "Login com e-mail + senha. Atualiza lastLoginAt e devolve tokens.",
+        body: { email: "ana@london.com", password: "senha123", device: "ios" }
+      },
+      {
+        method: "POST", path: "/api/auth/refresh", auth: false,
+        desc: "Troca o refresh token (rotação). O anterior é revogado.",
+        body: { refreshToken: "hex", device: "ios" }
+      },
+      {
+        method: "POST", path: "/api/auth/logout", auth: false,
+        desc: "Revoga o refresh token enviado.",
+        body: { refreshToken: "hex" }
+      },
+      {
+        method: "GET", path: "/api/auth/me", auth: true,
+        desc: "Usuário autenticado + perfil, equipamentos e músculos de foco."
+      }
+    ]
+  },
+  {
+    id: "profile",
+    title: "Perfil e onboarding",
+    lead: "Nome, objetivo, nível, dias, equipamentos preferidos e foco muscular.",
+    routes: [
+      { method: "GET", path: "/api/profile", auth: true, desc: "Perfil completo do aluno." },
+      {
+        method: "PUT", path: "/api/profile", auth: true,
+        desc: "Atualiza campos do perfil. Envie só o que mudou. equipment e focus substituem a lista inteira.",
+        body: { name: "Ana Souza", goal: "hipertrofia", level: "intermediario", environment: "academia", trainingDays: 4, sessionDurationMin: 60, restDefaultSec: 90, soundEnabled: true, reminders: false, language: "pt-BR", unitKg: true, gender: "female", equipment: ["halteres", "barra"], focus: ["peito", "costas"] }
+      },
+      {
+        method: "POST", path: "/api/profile/onboarding", auth: true,
+        desc: "Fecha o onboarding (onboardingDone = true) e grava as escolhas iniciais.",
+        body: { name: "Ana Souza", goal: "hipertrofia", level: "iniciante", environment: "academia", trainingDays: 4, sessionDurationMin: 60, equipment: ["halteres"], focus: ["pernas"] }
+      },
+      { method: "PUT", path: "/api/profile/equipment", auth: true, desc: "Substitui equipamentos do onboarding.", body: { equipment: ["halteres", "barra", "cabo"] } },
+      { method: "PUT", path: "/api/profile/focus", auth: true, desc: "Substitui músculos de foco.", body: { focus: ["peito", "ombros"] } }
+    ]
+  },
+  {
+    id: "membership",
+    title: "Matrícula e pagamentos",
+    lead: "O app mostra plano, status, unidade, código do aluno, vencimento e lista de pagamentos.",
+    routes: [
+      { method: "GET", path: "/api/membership", auth: true, desc: "Matrícula atual + plano + unidade + pagamentos." },
+      { method: "GET", path: "/api/membership/payments", auth: true, desc: "Histórico de pagamentos do aluno." },
+      { method: "GET", path: "/api/gym-units", auth: true, desc: "Unidades ativas." },
+      { method: "GET", path: "/api/membership-plans", auth: true, desc: "Planos ativos (Mensal, Trimestral, Anual)." },
+      { method: "POST", path: "/api/membership", auth: true, desc: "Cria/renova matrícula.", body: { planId: "uuid", unitId: "uuid" } },
+      { method: "POST", path: "/api/membership/payments", auth: true, desc: "Registra cobrança ou pagamento.", body: { amount: 149.9, dueDate: "2026-09-20", status: "pago", method: "pix", paidAt: "2026-08-20" } },
+      { method: "PUT", path: "/api/membership/payments/:id", auth: true, desc: "Atualiza status/método de um pagamento.", body: { status: "pago", method: "pix" } }
+    ]
+  },
+  {
+    id: "locations",
+    title: "Locais de treino",
+    lead: "Academia ou casa, com equipamentos daquele local. Só um local ativo por vez.",
+    routes: [
+      { method: "GET", path: "/api/locations", auth: true, desc: "Lista locais do aluno." },
+      { method: "POST", path: "/api/locations", auth: true, desc: "Cria local.", body: { name: "Minha Academia", type: "gym", isActive: true, equipment: ["halteres", "maquina"] } },
+      { method: "PUT", path: "/api/locations/:id", auth: true, desc: "Edita nome, tipo e equipamentos." },
+      { method: "PUT", path: "/api/locations/:id/equipment", auth: true, desc: "Substitui equipamentos do local.", body: { equipment: ["barra", "cabo"] } },
+      { method: "PUT", path: "/api/locations/:id/activate", auth: true, desc: "Marca o local como ativo e desativa os outros." },
+      { method: "DELETE", path: "/api/locations/:id", auth: true, desc: "Remove o local." }
+    ]
+  },
+  {
+    id: "workouts",
+    title: "Fichas (custom workouts)",
+    lead: "CRUD das fichas criadas pelo aluno. Exclusão é soft delete (deleted_at).",
+    routes: [
+      { method: "GET", path: "/api/workouts", auth: true, desc: "Lista fichas com exercícios." },
+      {
+        method: "POST", path: "/api/workouts", auth: true,
+        desc: "Cria ficha. exerciseId = id do catálogo London.",
+        body: { name: "Push A", isFavorite: false, exercises: [{ exerciseId: "rosca-direta-barra-reta", sets: 3, reps: 10, kg: 20, restSec: 90 }] }
+      },
+      { method: "GET", path: "/api/workouts/:id", auth: true, desc: "Detalhe da ficha." },
+      { method: "PUT", path: "/api/workouts/:id", auth: true, desc: "Edita nome, favorito e/ou substitui a lista de exercícios (reordenar = reenviar na ordem)." },
+      { method: "DELETE", path: "/api/workouts/:id", auth: true, desc: "Soft delete da ficha." }
+    ]
+  },
+  {
+    id: "plans",
+    title: "Plano da semana",
+    lead: "Um único workout_plans.is_active = true por usuário. Generate cria a estrutura A/B/C se days não for enviado.",
+    routes: [
+      { method: "GET", path: "/api/plans", auth: true, desc: "Todos os planos do aluno." },
+      { method: "GET", path: "/api/plans/active", auth: true, desc: "Plano ativo, com dias, foco e exercícios." },
+      {
+        method: "POST", path: "/api/plans/generate", auth: true,
+        desc: "Gera plano e já o deixa ativo. Sem days, usa template 3–6 dias.",
+        body: { name: "Hipertrofia 4x", source: "ia", programId: "hipertrofia", goal: "hipertrofia", level: "intermediario", daysPerWeek: 4 }
+      },
+      { method: "PUT", path: "/api/plans/active", auth: true, desc: "Troca o plano ativo.", body: { planId: "uuid" } },
+      { method: "GET", path: "/api/plans/:id", auth: true, desc: "Detalhe de um plano." },
+      { method: "PUT", path: "/api/plans/:id", auth: true, desc: "Edita plano. Se enviar days, a árvore inteira é reescrita." },
+      { method: "DELETE", path: "/api/plans/:id", auth: true, desc: "Apaga o plano e os dias em cascade." }
+    ]
+  },
+  {
+    id: "sessions",
+    title: "Execução e histórico",
+    lead: "Sessão em andamento sobrevive se o app fechar. Ao concluir, o servidor calcula volume, kcal, PRs e grava série a série.",
+    routes: [
+      { method: "GET", path: "/api/sessions/current", auth: true, desc: "Sessão in_progress, se existir." },
+      { method: "GET", path: "/api/sessions", auth: true, desc: "Histórico. Query: status=completed|abandoned|in_progress (padrão completed)." },
+      {
+        method: "POST", path: "/api/sessions", auth: true,
+        desc: "Inicia sessão. Se já houver uma in_progress, ela é retomada (resumed: true). Pode copiar de ficha ou dia do plano.",
+        body: { sourceType: "custom", sourceId: "uuid", name: "Push A" }
+      },
+      { method: "GET", path: "/api/sessions/:id", auth: true, desc: "Detalhe com exercícios e sets (W/N/D/S)." },
+      {
+        method: "PUT", path: "/api/sessions/:id", auth: true,
+        desc: "Atualiza a árvore da sessão em andamento (kg, reps, done, troca de exercício).",
+        body: { exercises: [{ exerciseId: "rosca-direta-barra-reta", restSec: 90, replacedFromExerciseId: null, sets: [{ type: "W", kg: 10, reps: 12, done: true }, { type: "N", kg: 20, reps: 10, done: true }] }] }
+      },
+      {
+        method: "POST", path: "/api/sessions/:id/complete", auth: true,
+        desc: "Conclui, recalcula volume (kg*reps das séries done, exceto W) e kcal. muscles atualiza recuperação.",
+        body: { durationMin: 54, muscles: ["peito", "triceps"] }
+      },
+      { method: "POST", path: "/api/sessions/:id/abandon", auth: true, desc: "Marca abandoned + soft delete." }
+    ]
+  },
+  {
+    id: "body",
+    title: "Corpo, recuperação, biblioteca e apps",
+    lead: "Medidas em histórico, recuperação muscular, favoritos, like/dislike e analytics de visualização.",
+    routes: [
+      { method: "GET", path: "/api/body", auth: true, desc: "Histórico de medidas + current (mais recente)." },
+      { method: "POST", path: "/api/body", auth: true, desc: "Nova medição.", body: { heightCm: 170, weightKg: 68.4, weightGoalKg: 64, measuredAt: "2026-08-20" } },
+      { method: "GET", path: "/api/recovery", auth: true, desc: "Último treino por músculo." },
+      { method: "PUT", path: "/api/recovery", auth: true, desc: "Atualiza lastTrainedAt de um músculo.", body: { muscleId: "peito" } },
+      { method: "GET", path: "/api/favorites", auth: true, desc: "Exercícios favoritos." },
+      { method: "POST", path: "/api/favorites/:exerciseId", auth: true, desc: "Favorita um exercício do catálogo London." },
+      { method: "DELETE", path: "/api/favorites/:exerciseId", auth: true, desc: "Remove favorito." },
+      { method: "GET", path: "/api/feedback", auth: true, desc: "Like/dislike do aluno." },
+      { method: "PUT", path: "/api/feedback/:exerciseId", auth: true, desc: "Define feedback.", body: { feedback: "positive" } },
+      { method: "POST", path: "/api/analytics", auth: true, desc: "Evento de visualização ou uso.", body: { event: "exercise_view", exerciseId: "rosca-direta-barra-reta", payload: { source: "library" } } },
+      { method: "GET", path: "/api/apps", auth: true, desc: "Apps conectados (Apple Health, Strava)." },
+      { method: "PUT", path: "/api/apps/:app", auth: true, desc: "app = apple_health | strava", body: { status: "connected" } }
+    ]
+  },
+  {
+    id: "catalog",
+    title: "Catálogo e mídia (já existiam)",
+    lead: "SQLite local + ExerciseDB. Não duplica o catálogo no Postgres — as fichas só guardam exerciseId.",
+    routes: [
+      { method: "GET", path: "/api/exercises", auth: false, desc: "Lista paginada. Query: page, limit, search, bodyPart, equipment, targetMuscle." },
+      { method: "GET", path: "/api/exercises/search", auth: false, desc: "Busca por q ou search." },
+      { method: "GET", path: "/api/exercises/filters", auth: false, desc: "Filtros disponíveis." },
+      { method: "GET", path: "/api/exercises/:id", auth: false, desc: "Detalhe por external_id da ExerciseDB." },
+      { method: "GET", path: "/api/media/fallback", auth: false, desc: "GIF fallback Tenor. Query: q." },
+      { method: "POST", path: "/api/admin/exercises/sync", auth: false, desc: "Sincroniza catálogo ExerciseDB (job)." },
+      { method: "GET", path: "/api/admin/exercises/sync/status", auth: false, desc: "Status da sync." },
+      { method: "GET", path: "/health", auth: false, desc: "Health check + ping no Postgres." }
+    ]
+  }
+];
+
+const enums = [
+  ["goal", "hipertrofia | forca | emagrecimento | definicao | condicionamento | manutencao"],
+  ["level", "iniciante | intermediario | avancado"],
+  ["environment", "academia | casa | peso-corporal"],
+  ["membership.status", "ativa | atrasada | cancelada | expirada"],
+  ["payment.status", "pago | em_aberto | atrasado | cancelado"],
+  ["payment.method", "pix | card | boleto | cash"],
+  ["set.type", "W | N | D | S"],
+  ["session.sourceType", "plan_day | custom | fast | single"],
+  ["session.status", "in_progress | completed | abandoned"]
+];
+
+function esc(s) { return String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+function pretty(obj) { return esc(JSON.stringify(obj, null, 2)); }
+
+const nav = document.getElementById("nav");
+const content = document.getElementById("content");
+
+nav.innerHTML = groups.map((g) => `
+  <div class="nav-group">
+    <h4>${esc(g.title)}</h4>
+    ${g.routes.map((r) => `<a href="#${g.id}">${r.method} ${r.path.replace("/api/", "")}</a>`).join("")}
+  </div>
+`).join("");
+
+content.innerHTML = groups.map((g) => `
+  <section id="${g.id}">
+    <h2>${esc(g.title)}</h2>
+    <p class="lead">${esc(g.lead)}</p>
+    ${g.routes.map((r) => `
+      <article class="card" data-hay="${esc((r.method + " " + r.path + " " + r.desc + " " + g.title).toLowerCase())}">
+        <div class="route-head">
+          <span class="method ${r.method}">${r.method}</span>
+          <code class="path">${esc(r.path)}</code>
+          <span class="auth-badge ${r.auth ? "" : "public"}">${r.auth ? "Bearer token" : "pública"}</span>
+        </div>
+        <p>${esc(r.desc)}</p>
+        ${r.body ? `<pre>${pretty(r.body)}</pre>` : ""}
+        ${r.out ? `<pre>${pretty(r.out)}</pre>` : ""}
+      </article>
+    `).join("")}
+  </section>
+`).join("") + `
+  <section id="enums">
+    <h2>Enums e regras</h2>
+    <p class="lead">Valores aceitos pelo banco. Fora disso a API responde 400/409.</p>
+    <table>
+      <thead><tr><th>Campo</th><th>Valores</th></tr></thead>
+      <tbody>${enums.map(([k, v]) => `<tr><td><code>${esc(k)}</code></td><td>${esc(v)}</td></tr>`).join("")}</tbody>
+    </table>
+    <div class="card">
+      <p><strong>Volume:</strong> soma de kg × reps das séries done, ignorando warmup (W).</p>
+      <p><strong>kcal:</strong> round(durationMin × 5.5 + volumeKg × 0.035), ou o valor enviado no complete.</p>
+      <p><strong>Plano ativo:</strong> índice único parcial — só um is_active = true por usuário.</p>
+      <p><strong>Sessão aberta:</strong> índice único parcial — só uma in_progress por usuário.</p>
+    </div>
+  </section>
+`;
+
+const search = document.getElementById("search");
+search.addEventListener("input", () => {
+  const q = search.value.trim().toLowerCase();
+  document.querySelectorAll("article.card").forEach((el) => {
+    el.style.display = !q || el.dataset.hay.includes(q) ? "" : "none";
+  });
+});
+</script>
+</body>
+</html>
