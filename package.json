@@ -1,0 +1,10 @@
+{
+  "name": "@london-fitness/backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API da Academia London Fitness",
+  "scripts": {
+    "dev": "node --env-file=../.env index.js",
+    "start": "node --env-file=../.env index.js"
+  }
+}
