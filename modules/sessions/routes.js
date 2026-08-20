@@ -1,5 +1,5 @@
 const { one, many, camel, pool } = require("../../db/pool");
-const { ok, readJson, matchPath, required, httpError, query } = require("../../lib/http");
+const { ok, readJson, matchPath, httpError, query } = require("../../lib/http");
 const { requireUser } = require("../../lib/auth");
 
 function calcCalories(durationMin, volumeKg) {
@@ -41,6 +41,34 @@ function totalsFromSets(exercises) {
   return { volume, setsCount, bestWeight: bestWeight || null, bestReps: bestReps || null };
 }
 
+function asDoneOnComplete(exercises, completing) {
+  return (exercises || []).map((exercise, index) => ({
+    ...exercise,
+    position: exercise.position != null ? exercise.position : index,
+    sets: (exercise.sets || []).map((set, setIndex) => ({
+      ...set,
+      position: set.position != null ? set.position : setIndex,
+      done: completing ? set.done !== false : Boolean(set.done)
+    }))
+  }));
+}
+
+function templateToExercises(exercises) {
+  return (exercises || []).map((exercise) => {
+    if (Array.isArray(exercise.sets) && exercise.sets.length) return exercise;
+    const count = Number(exercise.setsCount || exercise.sets) || 3;
+    return {
+      ...exercise,
+      sets: Array.from({ length: count }, () => ({
+        type: "N",
+        kg: Number(exercise.kg) || 0,
+        reps: Number(exercise.reps) || 10,
+        done: false
+      }))
+    };
+  });
+}
+
 async function insertSessionExercises(client, sessionId, exercises) {
   for (const [index, exercise] of (exercises || []).entries()) {
     if (!exercise.exerciseId) continue;
@@ -80,6 +108,11 @@ async function insertSessionExercises(client, sessionId, exercises) {
       );
     }
   }
+}
+
+async function replaceSessionTree(client, sessionId, exercises) {
+  await client.query("DELETE FROM workout_session_exercises WHERE session_id = $1", [sessionId]);
+  await insertSessionExercises(client, sessionId, exercises);
 }
 
 async function copyFromSource(userId, sourceType, sourceId) {
@@ -131,11 +164,6 @@ async function copyFromSource(userId, sourceType, sourceId) {
   return null;
 }
 
-async function replaceSessionTree(client, sessionId, exercises) {
-  await client.query("DELETE FROM workout_session_exercises WHERE session_id = $1", [sessionId]);
-  await insertSessionExercises(client, sessionId, exercises);
-}
-
 async function touchRecovery(userId, muscles) {
   const items = Array.isArray(muscles) ? muscles : [];
   for (const muscle of items) {
@@ -150,9 +178,202 @@ async function touchRecovery(userId, muscles) {
   }
 }
 
+function lastWorkingSet(exercise) {
+  const sets = (exercise.sets || []).filter((set) => set.type !== "W");
+  const last = sets[sets.length - 1] || (exercise.sets || [])[0] || {};
+  return {
+    exerciseId: exercise.exerciseId,
+    sets: Math.max(1, (exercise.sets || []).filter((set) => set.type !== "W").length || 3),
+    reps: Number(last.reps) || 10,
+    kg: Number(last.kg) || 0,
+    restSec: exercise.restSec != null ? exercise.restSec : 90
+  };
+}
+
+async function saveAsCustomWorkout(userId, name, exercises) {
+  const items = (exercises || []).map(lastWorkingSet).filter((item) => item.exerciseId);
+  if (!items.length) return null;
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const workout = (await client.query(
+      `INSERT INTO custom_workouts (user_id, name, is_favorite)
+       VALUES ($1, $2, false)
+       RETURNING *`,
+      [userId, name || "Treino salvo"]
+    )).rows[0];
+    for (const [index, item] of items.entries()) {
+      await client.query(
+        `INSERT INTO custom_workout_exercises (workout_id, position, exercise_id, sets, reps, kg, rest_sec)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [workout.id, index, item.exerciseId, item.sets, item.reps, item.kg, item.restSec]
+      );
+    }
+    await client.query("COMMIT");
+    return workout;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+async function finishSession(user, session, body) {
+  if (session.status === "completed" && session.deleted_at == null) {
+    return loadSession(session);
+  }
+  if (session.status === "abandoned") throw httpError(409, "sessão abandonada");
+
+  if (body.exercises) {
+    const exercises = asDoneOnComplete(templateToExercises(body.exercises), true);
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await replaceSessionTree(client, session.id, exercises);
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  } else {
+    const current = await loadSession(session);
+    if (current.exercises.length) {
+      const exercises = asDoneOnComplete(current.exercises, true);
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        await replaceSessionTree(client, session.id, exercises);
+        await client.query("COMMIT");
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      } finally {
+        client.release();
+      }
+    }
+  }
+
+  const loaded = await loadSession(session);
+  const stats = totalsFromSets(loaded.exercises);
+  const duration = body.durationMin != null
+    ? Number(body.durationMin)
+    : Math.max(1, Math.round((Date.now() - new Date(session.started_at).getTime()) / 60000));
+  const calories = body.calories != null ? Number(body.calories) : calcCalories(duration, stats.volume);
+  const updated = await one(
+    `UPDATE workout_sessions SET
+       status = 'completed',
+       finished_at = now(),
+       duration_min = $1,
+       volume_kg = $2,
+       calories = $3,
+       exercises_count = $4,
+       sets_count = $5,
+       best_weight = $6,
+       best_reps = $7,
+       name = COALESCE($8, name)
+     WHERE id = $9
+     RETURNING *`,
+    [
+      duration,
+      stats.volume,
+      calories,
+      loaded.exercises.length,
+      stats.setsCount,
+      stats.bestWeight,
+      stats.bestReps,
+      body.name || null,
+      session.id
+    ]
+  );
+  await touchRecovery(user.id, body.muscles);
+  const saved = await loadSession(updated);
+  let workout = null;
+  if (body.saveAsWorkout) {
+    workout = await saveAsCustomWorkout(user.id, body.name || updated.name, saved.exercises);
+  }
+  return workout ? { ...saved, savedWorkoutId: workout.id } : saved;
+}
+
+async function createCompletedSession(user, body) {
+  const sourceType = body.sourceType || "fast";
+  const copied = await copyFromSource(user.id, sourceType, body.sourceId);
+  const name = body.name || (copied && copied.name) || "Treino";
+  const raw = body.exercises || (copied && copied.exercises) || [];
+  const exercises = asDoneOnComplete(templateToExercises(raw), true);
+  if (!exercises.length) throw httpError(400, "envie os exercícios do treino finalizado");
+
+  const stats = totalsFromSets(exercises);
+  const duration = body.durationMin != null ? Number(body.durationMin) : 1;
+  const calories = body.calories != null ? Number(body.calories) : calcCalories(duration, stats.volume);
+  const startedAt = body.startedAt || new Date(Date.now() - duration * 60000);
+
+  const client = await pool.connect();
+  let session;
+  try {
+    await client.query("BEGIN");
+    session = (await client.query(
+      `INSERT INTO workout_sessions (
+         user_id, source_type, source_id, name, status, started_at, finished_at,
+         duration_min, volume_kg, calories, exercises_count, sets_count, best_weight, best_reps
+       ) VALUES ($1, $2, $3, $4, 'completed', $5, now(), $6, $7, $8, $9, $10, $11, $12)
+       RETURNING *`,
+      [
+        user.id,
+        sourceType,
+        body.sourceId || null,
+        name,
+        startedAt,
+        duration,
+        stats.volume,
+        calories,
+        exercises.length,
+        stats.setsCount,
+        stats.bestWeight,
+        stats.bestReps
+      ]
+    )).rows[0];
+    await insertSessionExercises(client, session.id, exercises);
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  await touchRecovery(user.id, body.muscles);
+  const saved = await loadSession(session);
+  if (body.saveAsWorkout) {
+    const workout = await saveAsCustomWorkout(user.id, name, saved.exercises);
+    if (workout) saved.savedWorkoutId = workout.id;
+  }
+  return saved;
+}
+
+async function listHistory(userId, status) {
+  const rows = await many(
+    `SELECT * FROM workout_sessions
+     WHERE user_id = $1 AND deleted_at IS NULL AND status = $2
+     ORDER BY COALESCE(finished_at, started_at) DESC
+     LIMIT 50`,
+    [userId, status]
+  );
+  const data = [];
+  for (const row of rows) data.push(await loadSession(row));
+  return data;
+}
+
 async function handle(req, res, url) {
   const pathname = url.pathname;
   const q = query(url);
+
+  if (req.method === "GET" && (matchPath(pathname, "/api/history") || matchPath(pathname, "/api/sessions"))) {
+    const user = await requireUser(req);
+    return ok(res, { data: await listHistory(user.id, q.status || "completed") });
+  }
 
   if (req.method === "GET" && matchPath(pathname, "/api/sessions/current")) {
     const user = await requireUser(req);
@@ -163,19 +384,23 @@ async function handle(req, res, url) {
     return ok(res, { data: session ? await loadSession(session) : null });
   }
 
-  if (req.method === "GET" && matchPath(pathname, "/api/sessions")) {
+  if (req.method === "POST" && matchPath(pathname, "/api/sessions/complete")) {
     const user = await requireUser(req);
-    const status = q.status || "completed";
-    const rows = await many(
-      `SELECT * FROM workout_sessions
-       WHERE user_id = $1 AND deleted_at IS NULL AND status = $2
-       ORDER BY started_at DESC
-       LIMIT 50`,
-      [user.id, status]
+    const body = await readJson(req);
+    if (body.sessionId) {
+      const session = await one(
+        "SELECT * FROM workout_sessions WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL",
+        [body.sessionId, user.id]
+      );
+      if (!session) throw httpError(404, "sessão não encontrada");
+      return ok(res, { data: await finishSession(user, session, body) });
+    }
+    const current = await one(
+      "SELECT * FROM workout_sessions WHERE user_id = $1 AND status = 'in_progress' AND deleted_at IS NULL LIMIT 1",
+      [user.id]
     );
-    const data = [];
-    for (const row of rows) data.push(await loadSession(row));
-    return ok(res, { data });
+    if (current) return ok(res, { data: await finishSession(user, current, body) });
+    return ok(res, { data: await createCompletedSession(user, body) }, 201);
   }
 
   if (req.method === "POST" && matchPath(pathname, "/api/sessions")) {
@@ -190,7 +415,7 @@ async function handle(req, res, url) {
     const sourceType = body.sourceType || "fast";
     const copied = await copyFromSource(user.id, sourceType, body.sourceId);
     const name = body.name || (copied && copied.name) || "Treino";
-    const exercises = body.exercises || (copied && copied.exercises) || [];
+    const exercises = templateToExercises(body.exercises || (copied && copied.exercises) || []);
 
     const client = await pool.connect();
     try {
@@ -221,42 +446,7 @@ async function handle(req, res, url) {
       [complete.id, user.id]
     );
     if (!session) throw httpError(404, "sessão não encontrada");
-    if (body.exercises) {
-      const client = await pool.connect();
-      try {
-        await client.query("BEGIN");
-        await replaceSessionTree(client, session.id, body.exercises);
-        await client.query("COMMIT");
-      } catch (err) {
-        await client.query("ROLLBACK");
-        throw err;
-      } finally {
-        client.release();
-      }
-    }
-    const loaded = await loadSession(session);
-    const stats = totalsFromSets(loaded.exercises);
-    const duration = body.durationMin != null
-      ? Number(body.durationMin)
-      : Math.max(1, Math.round((Date.now() - new Date(session.started_at).getTime()) / 60000));
-    const calories = body.calories != null ? Number(body.calories) : calcCalories(duration, stats.volume);
-    const updated = await one(
-      `UPDATE workout_sessions SET
-         status = 'completed',
-         finished_at = now(),
-         duration_min = $1,
-         volume_kg = $2,
-         calories = $3,
-         exercises_count = $4,
-         sets_count = $5,
-         best_weight = $6,
-         best_reps = $7
-       WHERE id = $8
-       RETURNING *`,
-      [duration, stats.volume, calories, loaded.exercises.length, stats.setsCount, stats.bestWeight, stats.bestReps, session.id]
-    );
-    await touchRecovery(user.id, body.muscles);
-    return ok(res, { data: await loadSession(updated) });
+    return ok(res, { data: await finishSession(user, session, body) });
   }
 
   const abandon = matchPath(pathname, "/api/sessions/:id/abandon");
@@ -273,12 +463,14 @@ async function handle(req, res, url) {
     return ok(res, { data: camel(session) });
   }
 
+  const historyOne = matchPath(pathname, "/api/history/:id");
   const oneS = matchPath(pathname, "/api/sessions/:id");
-  if (req.method === "GET" && oneS) {
+  if (req.method === "GET" && (historyOne || oneS)) {
     const user = await requireUser(req);
+    const id = (historyOne || oneS).id;
     const session = await one(
       "SELECT * FROM workout_sessions WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL",
-      [oneS.id, user.id]
+      [id, user.id]
     );
     if (!session) throw httpError(404, "sessão não encontrada");
     return ok(res, { data: await loadSession(session) });
@@ -297,7 +489,7 @@ async function handle(req, res, url) {
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
-        await replaceSessionTree(client, session.id, body.exercises);
+        await replaceSessionTree(client, session.id, templateToExercises(body.exercises));
         await client.query(
           "UPDATE workout_sessions SET exercises_count = $1 WHERE id = $2",
           [body.exercises.length, session.id]

@@ -7,6 +7,7 @@ const { CORS, json, fail, applyCors } = require("./lib/http");
 loadEnv(".env");
 
 const { pool } = require("./db/pool");
+const { ensureMasterUser } = require("./lib/auth");
 
 const modules = [
   require("./modules/auth/routes"),
@@ -73,7 +74,11 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, HOST, () => {
-  console.log("API   http://" + HOST + ":" + PORT);
-  console.log("Docs  http://" + HOST + ":" + PORT + "/docs");
-});
+ensureMasterUser()
+  .catch((err) => console.error("master user:", err.message || err))
+  .finally(() => {
+    server.listen(PORT, HOST, () => {
+      console.log("API   http://" + HOST + ":" + PORT);
+      console.log("Docs  http://" + HOST + ":" + PORT + "/docs");
+    });
+  });

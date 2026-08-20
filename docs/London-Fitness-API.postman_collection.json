@@ -1,0 +1,931 @@
+{
+  "info": {
+    "name": "London Fitness API",
+    "description": "Collection da API da Academia London Fitness.\n\n**Como usar**\n1. Importe este arquivo no Postman (Import → File).\n2. Rode **Registrar** ou **Login** — o `accessToken` e o `refreshToken` são gravados sozinhos.\n3. As demais rotas já enviam `Authorization: Bearer {{accessToken}}`.\n\nBase URL padrão: `http://127.0.0.1:3000`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:3000" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "planId", "value": "" },
+    { "key": "unitId", "value": "" },
+    { "key": "membershipPaymentId", "value": "" },
+    { "key": "locationId", "value": "" },
+    { "key": "workoutId", "value": "" },
+    { "key": "workoutPlanId", "value": "" },
+    { "key": "planDayId", "value": "" },
+    { "key": "sessionId", "value": "" },
+    { "key": "exerciseId", "value": "rosca-direta-barra-reta" },
+    { "key": "exerciseExternalId", "value": "" },
+    { "key": "masterEmail", "value": "xavier.y@example.org" },
+    { "key": "masterPassword", "value": "" },
+    { "key": "masterKey", "value": "" }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "function saveTokens(json) {",
+          "  if (!json) return;",
+          "  if (json.accessToken) pm.collectionVariables.set('accessToken', json.accessToken);",
+          "  if (json.refreshToken) pm.collectionVariables.set('refreshToken', json.refreshToken);",
+          "  if (json.data && json.data.id) pm.collectionVariables.set('userId', json.data.id);",
+          "}",
+          "try {",
+          "  const json = pm.response.json();",
+          "  if (json.accessToken || json.refreshToken) saveTokens(json);",
+          "} catch (e) {}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Saúde",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health",
+            "description": "Ping da API + Postgres."
+          }
+        },
+        {
+          "name": "Documentação HTML",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/docs"
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Autenticação",
+      "item": [
+        {
+          "name": "Registrar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "if (json.refreshToken) pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "if (json.data && json.data.id) pm.collectionVariables.set('userId', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana@london.com\",\n  \"password\": \"senha123\",\n  \"name\": \"Ana Souza\",\n  \"phone\": \"11999999999\",\n  \"device\": \"postman\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Cria usuário, perfil e matrícula inicial. Senha mínima: 6 caracteres."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "if (json.refreshToken) pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "if (json.data && json.data.id) pm.collectionVariables.set('userId', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana@london.com\",\n  \"password\": \"senha123\",\n  \"device\": \"postman\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Login mestre",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "if (json.refreshToken) pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "if (json.data && json.data.id) pm.collectionVariables.set('userId', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{masterEmail}}\",\n  \"password\": \"{{masterPassword}}\",\n  \"device\": \"postman\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login do admin mestre. Também dá para pular o login e usar Authorization: Bearer {{masterKey}} em qualquer rota privada."
+          }
+        },
+        {
+          "name": "Me (chave mestre)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{masterKey}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": "Usa MASTER_KEY direto, sem JWT. Vale para qualquer rota privada."
+          }
+        },
+        {
+          "name": "Refresh token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "if (json.refreshToken) pm.collectionVariables.set('refreshToken', json.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\",\n  \"device\": \"postman\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/refresh"
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Perfil e onboarding",
+      "item": [
+        {
+          "name": "Ver perfil",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/profile" }
+        },
+        {
+          "name": "Atualizar perfil",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ana Souza\",\n  \"goal\": \"hipertrofia\",\n  \"level\": \"intermediario\",\n  \"environment\": \"academia\",\n  \"trainingDays\": 4,\n  \"sessionDurationMin\": 60,\n  \"restDefaultSec\": 90,\n  \"soundEnabled\": true,\n  \"reminders\": false,\n  \"language\": \"pt-BR\",\n  \"unitKg\": true,\n  \"gender\": \"female\",\n  \"equipment\": [\"halteres\", \"barra\"],\n  \"focus\": [\"peito\", \"costas\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/profile"
+          }
+        },
+        {
+          "name": "Concluir onboarding",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ana Souza\",\n  \"goal\": \"hipertrofia\",\n  \"level\": \"iniciante\",\n  \"environment\": \"academia\",\n  \"trainingDays\": 4,\n  \"sessionDurationMin\": 60,\n  \"equipment\": [\"halteres\"],\n  \"focus\": [\"pernas\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/profile/onboarding"
+          }
+        },
+        {
+          "name": "Atualizar equipamentos",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"equipment\": [\"halteres\", \"barra\", \"cabo\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/profile/equipment"
+          }
+        },
+        {
+          "name": "Atualizar foco muscular",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"focus\": [\"peito\", \"ombros\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/profile/focus"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Matrícula e pagamentos",
+      "item": [
+        {
+          "name": "Ver matrícula",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/membership" }
+        },
+        {
+          "name": "Listar pagamentos",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/membership/payments" }
+        },
+        {
+          "name": "Listar unidades",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data[0]) pm.collectionVariables.set('unitId', json.data[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/gym-units" }
+        },
+        {
+          "name": "Listar planos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data[0]) pm.collectionVariables.set('planId', json.data[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/membership-plans" }
+        },
+        {
+          "name": "Criar matrícula",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planId\": \"{{planId}}\",\n  \"unitId\": \"{{unitId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/membership"
+          }
+        },
+        {
+          "name": "Registrar pagamento",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.id) pm.collectionVariables.set('membershipPaymentId', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 149.9,\n  \"dueDate\": \"2026-09-20\",\n  \"status\": \"pago\",\n  \"method\": \"pix\",\n  \"paidAt\": \"2026-08-20\"\n}"
+            },
+            "url": "{{baseUrl}}/api/membership/payments"
+          }
+        },
+        {
+          "name": "Atualizar pagamento",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"pago\",\n  \"method\": \"pix\"\n}"
+            },
+            "url": "{{baseUrl}}/api/membership/payments/{{membershipPaymentId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Locais de treino",
+      "item": [
+        {
+          "name": "Listar locais",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/locations" }
+        },
+        {
+          "name": "Criar local",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.id) pm.collectionVariables.set('locationId', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Minha Academia\",\n  \"type\": \"gym\",\n  \"isActive\": true,\n  \"equipment\": [\"halteres\", \"maquina\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/locations"
+          }
+        },
+        {
+          "name": "Editar local",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Academia Centro\",\n  \"type\": \"gym\",\n  \"equipment\": [\"halteres\", \"barra\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/locations/{{locationId}}"
+          }
+        },
+        {
+          "name": "Atualizar equipamentos do local",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"equipment\": [\"barra\", \"cabo\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/locations/{{locationId}}/equipment"
+          }
+        },
+        {
+          "name": "Ativar local",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{baseUrl}}/api/locations/{{locationId}}/activate"
+          }
+        },
+        {
+          "name": "Apagar local",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/locations/{{locationId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Fichas",
+      "item": [
+        {
+          "name": "Listar fichas",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/workouts" }
+        },
+        {
+          "name": "Criar ficha",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.id) pm.collectionVariables.set('workoutId', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Push A\",\n  \"isFavorite\": false,\n  \"exercises\": [\n    {\n      \"exerciseId\": \"{{exerciseId}}\",\n      \"sets\": 3,\n      \"reps\": 10,\n      \"kg\": 20,\n      \"restSec\": 90\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/workouts"
+          }
+        },
+        {
+          "name": "Ver ficha",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/workouts/{{workoutId}}" }
+        },
+        {
+          "name": "Editar ficha",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Push A — atualizado\",\n  \"isFavorite\": true,\n  \"exercises\": [\n    {\n      \"exerciseId\": \"{{exerciseId}}\",\n      \"sets\": 4,\n      \"reps\": 8,\n      \"kg\": 22.5,\n      \"restSec\": 90\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/workouts/{{workoutId}}"
+          }
+        },
+        {
+          "name": "Apagar ficha (soft delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/workouts/{{workoutId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Plano da semana",
+      "item": [
+        {
+          "name": "Listar planos",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/plans" }
+        },
+        {
+          "name": "Ver plano ativo",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/plans/active" }
+        },
+        {
+          "name": "Gerar plano",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.id) pm.collectionVariables.set('workoutPlanId', json.data.id);",
+                  "if (json.data && json.data.days && json.data.days[0]) pm.collectionVariables.set('planDayId', json.data.days[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Hipertrofia 4x\",\n  \"source\": \"ia\",\n  \"programId\": \"hipertrofia\",\n  \"goal\": \"hipertrofia\",\n  \"level\": \"intermediario\",\n  \"daysPerWeek\": 4\n}"
+            },
+            "url": "{{baseUrl}}/api/plans/generate"
+          }
+        },
+        {
+          "name": "Definir plano ativo",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planId\": \"{{workoutPlanId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/plans/active"
+          }
+        },
+        {
+          "name": "Ver plano",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/plans/{{workoutPlanId}}" }
+        },
+        {
+          "name": "Editar plano",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Hipertrofia 4x — editado\",\n  \"daysPerWeek\": 4\n}"
+            },
+            "url": "{{baseUrl}}/api/plans/{{workoutPlanId}}"
+          }
+        },
+        {
+          "name": "Apagar plano",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/plans/{{workoutPlanId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Execução e histórico",
+      "item": [
+        {
+          "name": "Sessão atual",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/sessions/current" }
+        },
+        {
+          "name": "Histórico",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/history"
+          }
+        },
+        {
+          "name": "Ver treino do histórico",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/history/{{sessionId}}" }
+        },
+        {
+          "name": "Salvar treino finalizado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.id) pm.collectionVariables.set('sessionId', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Push A\",\n  \"sourceType\": \"fast\",\n  \"durationMin\": 54,\n  \"muscles\": [\"peito\", \"triceps\"],\n  \"saveAsWorkout\": false,\n  \"exercises\": [\n    {\n      \"exerciseId\": \"{{exerciseId}}\",\n      \"restSec\": 90,\n      \"sets\": [\n        { \"type\": \"W\", \"kg\": 10, \"reps\": 12 },\n        { \"type\": \"N\", \"kg\": 20, \"reps\": 10 }\n      ]\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/sessions/complete",
+            "description": "Salva o treino no histórico numa chamada só. Se já existir sessão aberta, conclui ela."
+          }
+        },
+        {
+          "name": "Iniciar sessão (ficha)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.id) pm.collectionVariables.set('sessionId', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceType\": \"custom\",\n  \"sourceId\": \"{{workoutId}}\",\n  \"name\": \"Push A\"\n}"
+            },
+            "url": "{{baseUrl}}/api/sessions"
+          }
+        },
+        {
+          "name": "Iniciar sessão (treino rápido)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.id) pm.collectionVariables.set('sessionId', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceType\": \"fast\",\n  \"name\": \"Treino rápido\",\n  \"exercises\": [\n    {\n      \"exerciseId\": \"{{exerciseId}}\",\n      \"restSec\": 90,\n      \"sets\": [\n        { \"type\": \"N\", \"kg\": 20, \"reps\": 10, \"done\": false }\n      ]\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/sessions"
+          }
+        },
+        {
+          "name": "Ver sessão",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/sessions/{{sessionId}}" }
+        },
+        {
+          "name": "Atualizar séries",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exercises\": [\n    {\n      \"exerciseId\": \"{{exerciseId}}\",\n      \"restSec\": 90,\n      \"replacedFromExerciseId\": null,\n      \"sets\": [\n        { \"type\": \"W\", \"kg\": 10, \"reps\": 12, \"done\": true },\n        { \"type\": \"N\", \"kg\": 20, \"reps\": 10, \"done\": true }\n      ]\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/sessions/{{sessionId}}"
+          }
+        },
+        {
+          "name": "Concluir sessão",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"durationMin\": 54,\n  \"muscles\": [\"peito\", \"triceps\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/sessions/{{sessionId}}/complete"
+          }
+        },
+        {
+          "name": "Abandonar sessão",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/sessions/{{sessionId}}/abandon"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Corpo, biblioteca e apps",
+      "item": [
+        {
+          "name": "Histórico de medidas",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/body" }
+        },
+        {
+          "name": "Registrar medida",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"heightCm\": 170,\n  \"weightKg\": 68.4,\n  \"weightGoalKg\": 64,\n  \"measuredAt\": \"2026-08-20\"\n}"
+            },
+            "url": "{{baseUrl}}/api/body"
+          }
+        },
+        {
+          "name": "Recuperação muscular",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/recovery" }
+        },
+        {
+          "name": "Atualizar recuperação",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"muscleId\": \"peito\"\n}"
+            },
+            "url": "{{baseUrl}}/api/recovery"
+          }
+        },
+        {
+          "name": "Listar favoritos",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/favorites" }
+        },
+        {
+          "name": "Favoritar exercício",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/favorites/{{exerciseId}}"
+          }
+        },
+        {
+          "name": "Remover favorito",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/favorites/{{exerciseId}}"
+          }
+        },
+        {
+          "name": "Listar feedback",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/feedback" }
+        },
+        {
+          "name": "Enviar like/dislike",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"feedback\": \"positive\"\n}"
+            },
+            "url": "{{baseUrl}}/api/feedback/{{exerciseId}}"
+          }
+        },
+        {
+          "name": "Registrar analytics",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"exercise_view\",\n  \"exerciseId\": \"{{exerciseId}}\",\n  \"payload\": { \"source\": \"library\" }\n}"
+            },
+            "url": "{{baseUrl}}/api/analytics"
+          }
+        },
+        {
+          "name": "Apps conectados",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/apps" }
+        },
+        {
+          "name": "Conectar Apple Health",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"connected\"\n}"
+            },
+            "url": "{{baseUrl}}/api/apps/apple_health"
+          }
+        },
+        {
+          "name": "Conectar Strava",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"connected\"\n}"
+            },
+            "url": "{{baseUrl}}/api/apps/strava"
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Catálogo e mídia",
+      "item": [
+        {
+          "name": "Listar exercícios",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const first = json.data && json.data[0];",
+                  "if (first && first.externalId) pm.collectionVariables.set('exerciseExternalId', first.externalId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/exercises?page=1&limit=20&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "exercises"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "search", "value": "" },
+                { "key": "bodyPart", "value": "", "disabled": true },
+                { "key": "equipment", "value": "", "disabled": true },
+                { "key": "targetMuscle", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar exercícios",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/exercises/search?q=rosca",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "exercises", "search"],
+              "query": [{ "key": "q", "value": "rosca" }]
+            }
+          }
+        },
+        {
+          "name": "Filtros",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/exercises/filters"
+          }
+        },
+        {
+          "name": "Detalhe do exercício",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/exercises/{{exerciseExternalId}}"
+          }
+        },
+        {
+          "name": "GIF fallback",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/media/fallback?q=rosca direta",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "media", "fallback"],
+              "query": [{ "key": "q", "value": "rosca direta" }]
+            }
+          }
+        },
+        {
+          "name": "Sync ExerciseDB",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/admin/exercises/sync"
+          }
+        },
+        {
+          "name": "Status da sync",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/admin/exercises/sync/status"
+          }
+        }
+      ]
+    }
+  ]
+}

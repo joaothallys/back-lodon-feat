@@ -5,6 +5,7 @@ const { loadEnv } = require("../load-env");
 loadEnv(".env");
 
 const { pool } = require("./pool");
+const { ensureMasterUser } = require("../lib/auth");
 
 async function migrate() {
   if (!process.env.DATABASE_URL) {
@@ -32,6 +33,9 @@ async function migrate() {
     await pool.query("INSERT INTO schema_migrations (id) VALUES ($1)", [file]);
     console.log("ok    " + file);
   }
+
+  const master = await ensureMasterUser();
+  if (master) console.log("master " + master.email);
 }
 
 migrate()

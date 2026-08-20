@@ -83,10 +83,14 @@
     .auth-badge { margin-left: auto; font-size: 11px; color: var(--gold); border: 1px solid rgba(232,184,109,.3); padding: 4px 8px; border-radius: 999px; }
     .auth-badge.public { color: var(--ok); border-color: rgba(126,224,168,.3); }
     .card p { color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); margin: 12px 0 6px; }
     pre {
       background: #0c1016; border: 1px solid #222a37; border-radius: 12px;
       padding: 14px; overflow: auto; color: #d7e0ee; font-size: 12px; line-height: 1.55;
     }
+    .steps { display: grid; gap: 10px; margin: 0 0 22px; }
+    .steps div { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .steps strong { color: var(--text); }
     table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 10px 0 16px; }
     th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #243043; vertical-align: top; }
     th { color: var(--muted); font-size: 12px; font-weight: 600; }
@@ -119,15 +123,16 @@
         <h1>Documentação da API</h1>
         <p>
           Backend da Academia London Fitness. Cobre conta, perfil, matrícula, locais,
-          fichas, plano da semana, execução série a série e histórico.
-          Senha nunca é gravada em texto — apenas hash bcrypt.
+          fichas (CRUD), plano da semana, execução série a série e histórico persistido
+          ao finalizar o treino. Senha nunca é gravada em texto — apenas hash bcrypt.
         </p>
         <div class="pills">
           <span class="pill">JWT + refresh</span>
+          <span class="pill">MASTER_KEY nas rotas privadas</span>
           <span class="pill">PostgreSQL</span>
-          <span class="pill">Soft delete em fichas</span>
-          <span class="pill">1 plano ativo / usuário</span>
-          <span class="pill">1 sessão in_progress</span>
+          <span class="pill">CRUD de fichas</span>
+          <span class="pill">Histórico ao finalizar</span>
+          <span class="pill">Collection Postman em /docs</span>
         </div>
       </div>
 
@@ -136,8 +141,9 @@
         <p class="lead">
           Envie o access token em todas as rotas privadas.
           O access token expira em 15 minutos. Use <code>POST /api/auth/refresh</code> para renovar.
+          O admin mestre também pode usar a <code>MASTER_KEY</code> do <code>.env</code> no lugar do JWT — vale em qualquer rota privada e não expira.
         </p>
-        <pre>Authorization: Bearer &lt;accessToken&gt;
+        <pre>Authorization: Bearer &lt;accessToken ou MASTER_KEY&gt;
 Content-Type: application/json</pre>
         <div class="grid">
           <div class="card">
@@ -158,7 +164,19 @@ Content-Type: application/json</pre>
         <p class="lead">
           IDs de exercício usam o catálogo London (<code>exerciseId</code>), não só o <code>sourceId</code> da ExerciseDB.
           Login atual do app (só e-mail) deve passar a enviar também <code>password</code>.
+          Collection Postman: <code>docs/London-Fitness-API.postman_collection.json</code>.
         </p>
+      </section>
+
+      <section id="fluxo">
+        <h2>Ficha × treino feito</h2>
+        <p class="lead">São duas coisas. A ficha é o modelo. O histórico é o que o aluno realmente executou.</p>
+        <div class="steps">
+          <div><strong>1. Cadastrar / editar / excluir ficha</strong> — <code>POST / PUT / DELETE /api/workouts</code>. Soft delete em exclusão.</div>
+          <div><strong>2. Começar (opcional)</strong> — <code>POST /api/sessions</code> copia a ficha ou um dia do plano. Se o app fechar, <code>GET /api/sessions/current</code> retoma.</div>
+          <div><strong>3. Finalizar = salvar</strong> — <code>POST /api/sessions/complete</code>. Grava séries, volume, kcal e PRs. Sem sessão aberta, cria o registro já como <code>completed</code>.</div>
+          <div><strong>4. Ver histórico</strong> — <code>GET /api/history</code> lista; <code>GET /api/history/:id</code> mostra série a série.</div>
+        </div>
       </section>
 
       <div id="content"></div>
@@ -180,7 +198,7 @@ const groups = [
       },
       {
         method: "POST", path: "/api/auth/login", auth: false,
-        desc: "Login com e-mail + senha. Atualiza lastLoginAt e devolve tokens.",
+        desc: "Login com e-mail + senha. Atualiza lastLoginAt e devolve tokens. O admin mestre usa xavier.y@example.org + MASTER_PASSWORD do .env.",
         body: { email: "ana@london.com", password: "senha123", device: "ios" }
       },
       {
@@ -248,18 +266,31 @@ const groups = [
   },
   {
     id: "workouts",
-    title: "Fichas (custom workouts)",
-    lead: "CRUD das fichas criadas pelo aluno. Exclusão é soft delete (deleted_at).",
+    title: "Fichas (cadastrar / editar / excluir)",
+    lead: "Modelo do treino que o aluno monta. Não é o histórico — histórico só nasce quando ele finaliza a execução.",
     routes: [
-      { method: "GET", path: "/api/workouts", auth: true, desc: "Lista fichas com exercícios." },
+      {
+        method: "GET", path: "/api/workouts", auth: true,
+        desc: "Lista fichas ativas (deleted_at nulo), com exercícios na ordem.",
+        out: { success: true, data: [{ id: "uuid", name: "Push A", isFavorite: false, exercises: [{ exerciseId: "rosca-direta-barra-reta", sets: 3, reps: 10, kg: 20, restSec: 90 }] }] }
+      },
       {
         method: "POST", path: "/api/workouts", auth: true,
-        desc: "Cria ficha. exerciseId = id do catálogo London.",
-        body: { name: "Push A", isFavorite: false, exercises: [{ exerciseId: "rosca-direta-barra-reta", sets: 3, reps: 10, kg: 20, restSec: 90 }] }
+        desc: "Cadastra ficha. exerciseId = id do catálogo London.",
+        body: { name: "Push A", isFavorite: false, exercises: [{ exerciseId: "rosca-direta-barra-reta", sets: 3, reps: 10, kg: 20, restSec: 90 }] },
+        out: { success: true, data: { id: "uuid", name: "Push A", exercises: [] } }
       },
       { method: "GET", path: "/api/workouts/:id", auth: true, desc: "Detalhe da ficha." },
-      { method: "PUT", path: "/api/workouts/:id", auth: true, desc: "Edita nome, favorito e/ou substitui a lista de exercícios (reordenar = reenviar na ordem)." },
-      { method: "DELETE", path: "/api/workouts/:id", auth: true, desc: "Soft delete da ficha." }
+      {
+        method: "PUT", path: "/api/workouts/:id", auth: true,
+        desc: "Edita nome, favorito e/ou substitui a lista de exercícios. Reordenar = reenviar na ordem nova.",
+        body: { name: "Push A — atualizado", isFavorite: true, exercises: [{ exerciseId: "rosca-direta-barra-reta", sets: 4, reps: 8, kg: 22.5, restSec: 90 }] }
+      },
+      {
+        method: "DELETE", path: "/api/workouts/:id", auth: true,
+        desc: "Exclui a ficha (soft delete). Some da listagem, não apaga o histórico já salvo.",
+        out: { success: true, deleted: true }
+      }
     ]
   },
   {
@@ -283,27 +314,39 @@ const groups = [
   {
     id: "sessions",
     title: "Execução e histórico",
-    lead: "Sessão em andamento sobrevive se o app fechar. Ao concluir, o servidor calcula volume, kcal, PRs e grava série a série.",
+    lead: "Ao finalizar, o treino é gravado no Postgres (séries, volume, kcal, PRs). Use POST /api/sessions/complete quando o aluno apertar Finalizar.",
     routes: [
-      { method: "GET", path: "/api/sessions/current", auth: true, desc: "Sessão in_progress, se existir." },
-      { method: "GET", path: "/api/sessions", auth: true, desc: "Histórico. Query: status=completed|abandoned|in_progress (padrão completed)." },
+      {
+        method: "GET", path: "/api/history", auth: true,
+        desc: "Treinos salvos (status completed). Alias de GET /api/sessions?status=completed.",
+        out: { success: true, data: [{ id: "uuid", name: "Push A", status: "completed", durationMin: 54, volumeKg: 1200, calories: 339, setsCount: 8 }] }
+      },
+      { method: "GET", path: "/api/history/:id", auth: true, desc: "Detalhe de um treino concluído, série a série." },
+      { method: "GET", path: "/api/sessions/current", auth: true, desc: "Sessão in_progress, se o aluno fechou o app no meio." },
+      { method: "GET", path: "/api/sessions", auth: true, desc: "Lista por status. Query: completed | abandoned | in_progress (padrão completed)." },
       {
         method: "POST", path: "/api/sessions", auth: true,
-        desc: "Inicia sessão. Se já houver uma in_progress, ela é retomada (resumed: true). Pode copiar de ficha ou dia do plano.",
+        desc: "Inicia sessão. Se já houver uma in_progress, ela é retomada (resumed: true). Copia ficha (sourceType=custom) ou dia do plano (plan_day).",
         body: { sourceType: "custom", sourceId: "uuid", name: "Push A" }
       },
       { method: "GET", path: "/api/sessions/:id", auth: true, desc: "Detalhe com exercícios e sets (W/N/D/S)." },
       {
         method: "PUT", path: "/api/sessions/:id", auth: true,
-        desc: "Atualiza a árvore da sessão em andamento (kg, reps, done, troca de exercício).",
+        desc: "Atualiza a sessão em andamento (kg, reps, done, troca de exercício).",
         body: { exercises: [{ exerciseId: "rosca-direta-barra-reta", restSec: 90, replacedFromExerciseId: null, sets: [{ type: "W", kg: 10, reps: 12, done: true }, { type: "N", kg: 20, reps: 10, done: true }] }] }
       },
       {
-        method: "POST", path: "/api/sessions/:id/complete", auth: true,
-        desc: "Conclui, recalcula volume (kg*reps das séries done, exceto W) e kcal. muscles atualiza recuperação.",
-        body: { durationMin: 54, muscles: ["peito", "triceps"] }
+        method: "POST", path: "/api/sessions/complete", auth: true,
+        desc: "Salva o treino finalizado. Com sessão aberta, conclui ela; senão cria já completed. Séries sem done são marcadas como feitas. saveAsWorkout: true também cria uma ficha em /workouts.",
+        body: { name: "Push A", sourceType: "fast", durationMin: 54, muscles: ["peito", "triceps"], saveAsWorkout: false, exercises: [{ exerciseId: "rosca-direta-barra-reta", restSec: 90, sets: [{ type: "N", kg: 20, reps: 10 }] }] },
+        out: { success: true, data: { id: "uuid", status: "completed", durationMin: 54, volumeKg: 200, calories: 304, exercises: [{ exerciseId: "rosca-direta-barra-reta", sets: [{ type: "N", kg: 20, reps: 10, done: true }] }] } }
       },
-      { method: "POST", path: "/api/sessions/:id/abandon", auth: true, desc: "Marca abandoned + soft delete." }
+      {
+        method: "POST", path: "/api/sessions/:id/complete", auth: true,
+        desc: "Conclui a sessão pelo id, marca séries como feitas, recalcula volume/kcal e persiste. Idempotente se já completed.",
+        body: { durationMin: 54, muscles: ["peito", "triceps"], saveAsWorkout: false }
+      },
+      { method: "POST", path: "/api/sessions/:id/abandon", auth: true, desc: "Marca abandoned + soft delete. Não entra no histórico." }
     ]
   },
   {
@@ -360,12 +403,23 @@ function pretty(obj) { return esc(JSON.stringify(obj, null, 2)); }
 const nav = document.getElementById("nav");
 const content = document.getElementById("content");
 
-nav.innerHTML = groups.map((g) => `
+nav.innerHTML = `
+  <div class="nav-group">
+    <h4>Guia</h4>
+    <a href="#intro">Como autenticar</a>
+    <a href="#fluxo">Ficha × treino feito</a>
+  </div>
+` + groups.map((g) => `
   <div class="nav-group">
     <h4>${esc(g.title)}</h4>
     ${g.routes.map((r) => `<a href="#${g.id}">${r.method} ${r.path.replace("/api/", "")}</a>`).join("")}
   </div>
-`).join("");
+`).join("") + `
+  <div class="nav-group">
+    <h4>Referência</h4>
+    <a href="#enums">Enums e regras</a>
+  </div>
+`;
 
 content.innerHTML = groups.map((g) => `
   <section id="${g.id}">
@@ -379,8 +433,8 @@ content.innerHTML = groups.map((g) => `
           <span class="auth-badge ${r.auth ? "" : "public"}">${r.auth ? "Bearer token" : "pública"}</span>
         </div>
         <p>${esc(r.desc)}</p>
-        ${r.body ? `<pre>${pretty(r.body)}</pre>` : ""}
-        ${r.out ? `<pre>${pretty(r.out)}</pre>` : ""}
+        ${r.body ? `<div class="label">Request</div><pre>${pretty(r.body)}</pre>` : ""}
+        ${r.out ? `<div class="label">Response</div><pre>${pretty(r.out)}</pre>` : ""}
       </article>
     `).join("")}
   </section>
@@ -393,10 +447,12 @@ content.innerHTML = groups.map((g) => `
       <tbody>${enums.map(([k, v]) => `<tr><td><code>${esc(k)}</code></td><td>${esc(v)}</td></tr>`).join("")}</tbody>
     </table>
     <div class="card">
+      <p><strong>Ficha ≠ histórico.</strong> /api/workouts é o modelo. /api/history é o treino executado e só existe depois do complete.</p>
       <p><strong>Volume:</strong> soma de kg × reps das séries done, ignorando warmup (W).</p>
       <p><strong>kcal:</strong> round(durationMin × 5.5 + volumeKg × 0.035), ou o valor enviado no complete.</p>
-      <p><strong>Plano ativo:</strong> índice único parcial — só um is_active = true por usuário.</p>
-      <p><strong>Sessão aberta:</strong> índice único parcial — só uma in_progress por usuário.</p>
+      <p><strong>Plano ativo:</strong> só um is_active = true por usuário.</p>
+      <p><strong>Sessão aberta:</strong> só uma in_progress por usuário. Finalizar libera essa vaga.</p>
+      <p><strong>Admin mestre:</strong> e-mail no .env (MASTER_EMAIL) ou Authorization: Bearer MASTER_KEY em qualquer rota privada.</p>
     </div>
   </section>
 `;
