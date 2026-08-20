@@ -7,6 +7,7 @@ const media = require("./modules/media/routes");
 loadEnv(".env");
 
 const PORT = Number(process.env.PORT) || 3000;
+const HOST = process.env.HOST || "0.0.0.0";
 
 async function handleApi(req, res, url) {
   if (await media.handle(req, res, url)) return;
@@ -23,6 +24,10 @@ const server = http.createServer(async (req, res) => {
       res.end();
       return;
     }
+    if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) {
+      json(res, 200, { ok: true });
+      return;
+    }
     if (url.pathname.startsWith("/api/")) return handleApi(req, res, url);
     json(res, 404, { success: false, error: "not found" });
   } catch (err) {
@@ -30,6 +35,6 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, "127.0.0.1", () => {
-  console.log("API  http://127.0.0.1:" + PORT);
+server.listen(PORT, HOST, () => {
+  console.log("API  http://" + HOST + ":" + PORT);
 });
