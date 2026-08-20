@@ -350,6 +350,46 @@ const groups = [
     ]
   },
   {
+    id: "progress",
+    title: "Progresso e gráficos",
+    lead: "Só agregação. Sem tabela de estatística — lê sessões + séries (volume = kg×reps, type ≠ W). Cada complete já alimenta o gráfico.",
+    routes: [
+      {
+        method: "GET", path: "/api/progress?range=week|month|year|all", auth: true,
+        desc: "Resumo do período, streak, meta semanal (goal = trainingDays do perfil), calendário, série do gráfico e top sessões. range padrão: week.",
+        out: {
+          success: true,
+          range: "week",
+          data: {
+            summary: { workouts: 3, durationMin: 148, volumeKg: 12400, calories: 890, setsCount: 54 },
+            streakDays: 4,
+            weeklyGoal: { done: 2, goal: 4 },
+            calendar: [{ date: "2026-08-20", sessionIds: ["uuid"], volumeKg: 3600 }],
+            series: [{ bucket: "2026-08-20", volumeKg: 3600, durationMin: 54, workouts: 1 }],
+            topSessions: [{ id: "uuid", name: "D · Ombros", finishedAt: "...", volumeKg: 3600, durationMin: 54 }]
+          }
+        }
+      },
+      {
+        method: "GET", path: "/api/progress/exercises", auth: true,
+        desc: "Um card por exerciseId London já treinado. Query opcional: range=week|month|year|all (padrão all). PRs = MAX kg nas séries done, sem W.",
+        out: { success: true, data: [{ exerciseId: "rosca-direta-barra-reta", displayName: "Rosca Direta Barra Reta", lastKg: 20, lastReps: 10, lastAt: "...", bestKg: 24, bestReps: 8, timesPerformed: 6 }] }
+      },
+      {
+        method: "GET", path: "/api/progress/muscles", auth: true,
+        desc: "Volume por músculo no range (padrão month), inferido do exerciseId London. lastTrainedAt usa recovery se existir.",
+        out: { success: true, data: [{ muscleId: "peito", volumeKg: 4200, setsCount: 18, lastTrainedAt: "..." }] }
+      },
+      {
+        method: "GET", path: "/api/progress/calendar?year=2026&month=8", auth: true,
+        desc: "Só os dias com treino daquele mês (calendário rápido). Timezone America/Sao_Paulo.",
+        out: { success: true, year: 2026, month: 8, data: [{ date: "2026-08-20", sessionIds: ["uuid"], volumeKg: 3600, workouts: 1 }] }
+      },
+      { method: "GET", path: "/api/history/:id", auth: true, desc: "Já existe. Detalhe série a série para o gráfico do exercício." },
+      { method: "GET", path: "/api/body", auth: true, desc: "Já existe. Histórico de peso/altura (uma linha por medição), não só o último valor." }
+    ]
+  },
+  {
     id: "body",
     title: "Corpo, recuperação, biblioteca e apps",
     lead: "Medidas em histórico, recuperação muscular, favoritos, like/dislike e analytics de visualização.",
@@ -453,6 +493,7 @@ content.innerHTML = groups.map((g) => `
       <p><strong>Plano ativo:</strong> só um is_active = true por usuário.</p>
       <p><strong>Sessão aberta:</strong> só uma in_progress por usuário. Finalizar libera essa vaga.</p>
       <p><strong>Admin mestre:</strong> e-mail no .env (MASTER_EMAIL) ou Authorization: Bearer MASTER_KEY em qualquer rota privada.</p>
+      <p><strong>Gráficos:</strong> sem tabela de stats. GET /api/progress agrega sessões. Volume = kg × reps, type ≠ W. exerciseId = catálogo London.</p>
     </div>
   </section>
 `;

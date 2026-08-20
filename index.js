@@ -16,6 +16,7 @@ const modules = [
   require("./modules/locations/routes"),
   require("./modules/plans/routes"),
   require("./modules/workouts/routes"),
+  require("./modules/progress/routes"),
   require("./modules/sessions/routes"),
   require("./modules/library/routes"),
   require("./modules/exercises/routes"),
