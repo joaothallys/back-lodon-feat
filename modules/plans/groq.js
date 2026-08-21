@@ -2,13 +2,24 @@ const { httpError } = require("../../lib/http");
 const { log } = require("../../lib/logger");
 
 const TIMEOUT_MS = 45_000;
+const DEFAULT_MODEL = "openai/gpt-oss-120b";
+const RETIRED_MODELS = {
+  "llama-3.3-70b-versatile": DEFAULT_MODEL,
+  "llama-3.1-8b-instant": "openai/gpt-oss-20b"
+};
 
 function groqUrl() {
   return process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1/chat/completions";
 }
 
 function groqModel() {
-  return process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+  const requested = process.env.GROQ_MODEL || DEFAULT_MODEL;
+  const mapped = RETIRED_MODELS[requested];
+  if (mapped) {
+    log.warn("groq.model_retired", { requested, using: mapped });
+    return mapped;
+  }
+  return requested;
 }
 
 async function completeJson({ system, user }) {
