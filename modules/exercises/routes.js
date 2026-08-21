@@ -1,6 +1,7 @@
 const ExerciseDBService = require("./exercisedb-service");
 const repo = require("./repo");
 const { json, readBody, query } = require("../../lib/http");
+const { loadExerciseMedia } = require("../media/exercise-media");
 
 const listCache = { key: "", at: 0, payload: null };
 const CACHE_MS = 20000;
@@ -202,7 +203,26 @@ async function handle(req, res, url) {
     if (!id || id.includes("/")) return json(res, 404, { success: false, error: "not found" });
     const item = repo.getByExternalId(id);
     if (!item) return json(res, 404, { success: false, error: "not found" });
-    return json(res, 200, { success: true, data: item });
+    if (!q.gender) return json(res, 200, { success: true, data: item });
+    try {
+      const media = await loadExerciseMedia({
+        q: item.originalName || item.name,
+        gender: q.gender
+      });
+      if (!media) return json(res, 200, { success: true, data: item });
+      return json(res, 200, {
+        success: true,
+        data: {
+          ...item,
+          imageUrl: media.imageUrl || item.imageUrl,
+          videoUrl: media.videoUrl || item.videoUrl,
+          mediaGender: media.gender || media.genderRequested,
+          genderMatched: media.genderMatched
+        }
+      });
+    } catch (_) {
+      return json(res, 200, { success: true, data: item });
+    }
   }
 
   return false;

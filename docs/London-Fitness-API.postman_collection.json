@@ -952,6 +952,24 @@
           }
         },
         {
+          "name": "Músculos V2",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/media/muscles"
+          }
+        },
+        {
+          "name": "Mídia V2 por sexo",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/media/exercise?q=hip thrust&gender=mulher"
+          }
+        },
+        {
           "name": "GIF fallback",
           "request": {
             "auth": { "type": "noauth" },

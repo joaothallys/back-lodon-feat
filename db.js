@@ -47,6 +47,38 @@ function open() {
 
     INSERT OR IGNORE INTO sync_meta (id, last_sync_at, last_error, last_report)
     VALUES (1, NULL, NULL, NULL);
+
+    CREATE TABLE IF NOT EXISTS media_v2 (
+      query_key TEXT PRIMARY KEY,
+      payload TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS v2_taxonomies (
+      kind TEXT PRIMARY KEY,
+      payload TEXT NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS v2_exercises (
+      exercise_id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      image_url TEXT,
+      video_url TEXT,
+      body_parts TEXT NOT NULL DEFAULT '[]',
+      equipments TEXT NOT NULL DEFAULT '[]',
+      target_muscles TEXT NOT NULL DEFAULT '[]',
+      secondary_muscles TEXT NOT NULL DEFAULT '[]',
+      exercise_type TEXT,
+      overview TEXT,
+      instructions TEXT NOT NULL DEFAULT '[]',
+      exercise_tips TEXT NOT NULL DEFAULT '[]',
+      variations TEXT NOT NULL DEFAULT '[]',
+      related_ids TEXT NOT NULL DEFAULT '[]',
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_v2_exercises_name ON v2_exercises (name);
   `);
   return db;
 }
@@ -72,6 +104,8 @@ function rowToExercise(row) {
     localizedName: row.localized_name,
     gifUrl: row.gif_url || null,
     videoUrl: row.video_url || null,
+    imageUrl: row.image_url || null,
+    gender: row.gender || null,
     bodyParts: parseJson(row.body_parts, []),
     equipments: parseJson(row.equipments, []),
     targetMuscles: parseJson(row.target_muscles, []),
@@ -316,6 +350,120 @@ function setGifFallback(queryKey, gifUrl, source) {
   `).run(queryKey, gifUrl, source || "tenor", Date.now());
 }
 
+const MEDIA_V2_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const V2_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+function getMediaV2(queryKey) {
+  const row = db.prepare("SELECT payload, created_at FROM media_v2 WHERE query_key = ?").get(queryKey);
+  if (!row) return null;
+  if (Date.now() - Number(row.created_at) > MEDIA_V2_TTL_MS) return null;
+  return parseJson(row.payload, null);
+}
+
+function setMediaV2(queryKey, payload) {
+  db.prepare(`
+    INSERT INTO media_v2 (query_key, payload, created_at)
+    VALUES (?, ?, ?)
+    ON CONFLICT(query_key) DO UPDATE SET payload = excluded.payload, created_at = excluded.created_at
+  `).run(queryKey, JSON.stringify(payload), Date.now());
+}
+
+function getV2Taxonomy(kind) {
+  const row = db.prepare("SELECT payload, updated_at FROM v2_taxonomies WHERE kind = ?").get(kind);
+  if (!row) return null;
+  if (Date.now() - Number(row.updated_at) > V2_TTL_MS) return null;
+  return parseJson(row.payload, null);
+}
+
+function setV2Taxonomy(kind, payload) {
+  db.prepare(`
+    INSERT INTO v2_taxonomies (kind, payload, updated_at)
+    VALUES (?, ?, ?)
+    ON CONFLICT(kind) DO UPDATE SET payload = excluded.payload, updated_at = excluded.updated_at
+  `).run(kind, JSON.stringify(payload), Date.now());
+}
+
+function rowToV2Exercise(row) {
+  if (!row) return null;
+  return {
+    exerciseId: row.exercise_id,
+    name: row.name,
+    imageUrl: row.image_url || null,
+    videoUrl: row.video_url || null,
+    bodyParts: parseJson(row.body_parts, []),
+    equipments: parseJson(row.equipments, []),
+    targetMuscles: parseJson(row.target_muscles, []),
+    secondaryMuscles: parseJson(row.secondary_muscles, []),
+    exerciseType: row.exercise_type || null,
+    overview: row.overview || null,
+    instructions: parseJson(row.instructions, []),
+    exerciseTips: parseJson(row.exercise_tips, []),
+    variations: parseJson(row.variations, []),
+    relatedExerciseIds: parseJson(row.related_ids, [])
+  };
+}
+
+function getV2Exercise(exerciseId) {
+  const row = db.prepare("SELECT * FROM v2_exercises WHERE exercise_id = ?").get(exerciseId);
+  if (!row) return null;
+  if (Date.now() - Number(row.updated_at) > V2_TTL_MS) return null;
+  return rowToV2Exercise(row);
+}
+
+function findV2ExerciseByName(name) {
+  const q = String(name || "").trim().toLowerCase();
+  if (!q) return null;
+  const row = db.prepare(
+    "SELECT * FROM v2_exercises WHERE lower(name) LIKE ? ORDER BY updated_at DESC LIMIT 1"
+  ).get("%" + q + "%");
+  if (!row) return null;
+  if (Date.now() - Number(row.updated_at) > V2_TTL_MS) return null;
+  return rowToV2Exercise(row);
+}
+
+function upsertV2Exercise(raw) {
+  if (!raw || !raw.exerciseId) return;
+  const images = raw.imageUrls || {};
+  db.prepare(`
+    INSERT INTO v2_exercises (
+      exercise_id, name, image_url, video_url, body_parts, equipments,
+      target_muscles, secondary_muscles, exercise_type, overview,
+      instructions, exercise_tips, variations, related_ids, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(exercise_id) DO UPDATE SET
+      name = excluded.name,
+      image_url = excluded.image_url,
+      video_url = excluded.video_url,
+      body_parts = excluded.body_parts,
+      equipments = excluded.equipments,
+      target_muscles = excluded.target_muscles,
+      secondary_muscles = excluded.secondary_muscles,
+      exercise_type = excluded.exercise_type,
+      overview = excluded.overview,
+      instructions = excluded.instructions,
+      exercise_tips = excluded.exercise_tips,
+      variations = excluded.variations,
+      related_ids = excluded.related_ids,
+      updated_at = excluded.updated_at
+  `).run(
+    raw.exerciseId,
+    raw.name || "untitled",
+    raw.imageUrl || images["480p"] || images["720p"] || null,
+    raw.videoUrl || null,
+    JSON.stringify(raw.bodyParts || []),
+    JSON.stringify(raw.equipments || []),
+    JSON.stringify(raw.targetMuscles || []),
+    JSON.stringify(raw.secondaryMuscles || []),
+    raw.exerciseType || null,
+    raw.overview || null,
+    JSON.stringify(Array.isArray(raw.instructions) ? raw.instructions : []),
+    JSON.stringify(Array.isArray(raw.exerciseTips) ? raw.exerciseTips : []),
+    JSON.stringify(Array.isArray(raw.variations) ? raw.variations : []),
+    JSON.stringify(Array.isArray(raw.relatedExerciseIds) ? raw.relatedExerciseIds : []),
+    Date.now()
+  );
+}
+
 module.exports = {
   upsertFromExerciseDB,
   upsertManyFromExerciseDB,
@@ -326,5 +474,12 @@ module.exports = {
   getSyncMeta,
   setSyncMeta,
   getGifFallback,
-  setGifFallback
+  setGifFallback,
+  getMediaV2,
+  setMediaV2,
+  getV2Taxonomy,
+  setV2Taxonomy,
+  getV2Exercise,
+  findV2ExerciseByName,
+  upsertV2Exercise
 };
