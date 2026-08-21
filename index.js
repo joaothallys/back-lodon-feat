@@ -10,6 +10,7 @@ loadEnv(".env");
 
 const { pool } = require("./db/pool");
 const { ensureMasterUser } = require("./lib/auth");
+const { seedCatalog, muscleCounts } = require("./modules/catalog/repo");
 
 const modules = [
   require("./modules/auth/routes"),
@@ -123,13 +124,26 @@ process.on("uncaughtException", (err) => {
   log.error("uncaughtException", log.errFields(err));
 });
 
-ensureMasterUser()
-  .then((user) => {
+async function boot() {
+  try {
+    const user = await ensureMasterUser();
     if (user) log.info("master.ready", { email: user.email });
-  })
-  .catch((err) => log.error("master.fail", log.errFields(err)))
-  .finally(() => {
-    server.listen(PORT, HOST, () => {
-      log.info("server.listen", { host: HOST, port: PORT });
+  } catch (err) {
+    log.error("master.fail", log.errFields(err));
+  }
+  try {
+    const count = await seedCatalog();
+    const muscles = await muscleCounts();
+    log.info("catalog.ready", {
+      count,
+      muscles: Object.fromEntries(muscles.map((row) => [row.muscle, row.total]))
     });
+  } catch (err) {
+    log.error("catalog.seed_fail", log.errFields(err));
+  }
+  server.listen(PORT, HOST, () => {
+    log.info("server.listen", { host: HOST, port: PORT });
   });
+}
+
+boot();

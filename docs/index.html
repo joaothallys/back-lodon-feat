@@ -184,7 +184,7 @@ Content-Type: application/json</pre>
         <h2>Plano com IA — Front ↔ Back ↔ Groq</h2>
         <p class="lead">
           O aluno termina o onboarding. O <strong>front não chama IA</strong>.
-          O back chama a Groq, valida cada <code>exerciseId</code> no catálogo London (172 IDs: peito, costas, ombros, bíceps),
+          O back chama a Groq, valida cada <code>exerciseId</code> no catálogo London (peito, costas, ombros, bíceps, tríceps, pernas, glúteos),
           grava o plano no Postgres e marca como ativo. O front só mostra <code>GET /api/plans/active</code>.
         </p>
         <div class="steps">
@@ -238,7 +238,7 @@ Content-Type: application/json</pre>
           <p><strong>Enums:</strong> gender <code>homem | mulher</code> · goal <code>hipertrofia | forca | emagrecimento | definicao</code> · level <code>iniciante | intermediario | avancado</code> · environment <code>academia | casa | peso-corporal</code> · daysPerWeek <code>3–6</code>.</p>
           <p><strong>equipment[]:</strong> halteres, barra, polia, maquina, banco, elastico, kettlebell, peso-corporal.</p>
           <p><strong>focus[]:</strong> peito, costas, ombros, biceps, triceps, pernas, gluteos, abdomen, corpo-inteiro. Vazio ou <code>corpo-inteiro</code> = corpo inteiro no catálogo disponível.</p>
-          <p><strong>Regras:</strong> days.length = daysPerWeek · 5–8 exercícios/dia (iniciante 5–6, avançado 7–8) · kg sempre 0 · rest iniciante 60 / intermediário 75 / força 90–120 · academia prioriza máquina, polia, halteres, barra · sem perna/tríceps no catálogo, o split usa só peito, costas, ombros e bíceps.</p>
+          <p><strong>Regras:</strong> days.length = daysPerWeek · 5–8 exercícios/dia · kg sempre 0 · academia prioriza máquina, polia, halteres, barra. <strong>Sexo manda no split:</strong> mulher 4 dias = glúteos, pernas, superiores, glúteos+pernas · homem 4 dias = peito, costas, ombros+tríceps, bíceps. Id fora do catálogo é descartado.</p>
           <p><strong>Erro:</strong> timeout ou Groq fora → <code>502 { "success": false, "error": "ia_unavailable" }</code>. O front usa fallback local.</p>
           <p><strong>O back não faz:</strong> devolver texto cru da IA · salvar exercício fora do catálogo · usar programId de template no lugar da IA · misturar ficha (<code>/api/workouts</code>) com plano ativo (<code>/api/plans</code>).</p>
         </div>

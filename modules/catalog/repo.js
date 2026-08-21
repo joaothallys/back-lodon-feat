@@ -27,6 +27,16 @@ async function seedCatalog() {
   return rows.length;
 }
 
+async function muscleCounts() {
+  return many(
+    `SELECT muscle_id AS muscle, count(*)::int AS total
+     FROM catalog_exercises
+     WHERE is_active = true
+     GROUP BY muscle_id
+     ORDER BY muscle_id`
+  );
+}
+
 async function listActive() {
   return many(
     `SELECT id, display_name, muscle_id, equipment_id, level, popularity
@@ -42,4 +52,4 @@ function promptLines(rows) {
     .join("\n");
 }
 
-module.exports = { seedCatalog, listActive, promptLines };
+module.exports = { seedCatalog, listActive, promptLines, muscleCounts };

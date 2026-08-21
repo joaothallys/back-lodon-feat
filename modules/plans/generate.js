@@ -82,6 +82,8 @@ function scoreExercise(row, ctx) {
   if (ctx.level === "iniciante" && row.level === "avancado") score -= 80;
   if (ctx.gender === "mulher" && HARD_IDS.has(row.id)) score -= 100;
   if (ctx.level === "iniciante" && HARD_IDS.has(row.id)) score -= 100;
+  if (ctx.gender === "mulher" && (row.muscle_id === "gluteos" || row.muscle_id === "pernas")) score += 40;
+  if (ctx.gender === "homem" && (row.muscle_id === "peito" || row.muscle_id === "biceps" || row.muscle_id === "triceps")) score += 30;
   return score;
 }
 
@@ -92,34 +94,95 @@ function allowedForStudent(row, ctx) {
   return true;
 }
 
-function splitFor(daysPerWeek, muscles) {
-  const pool = muscles.length ? muscles : ["peito", "costas", "ombros", "biceps"];
-  const names = {
-    peito: "Peito",
-    costas: "Costas",
-    ombros: "Ombros",
-    biceps: "Bíceps",
-    triceps: "Tríceps",
-    pernas: "Pernas",
-    gluteos: "Glúteos",
-    abdomen: "Abdômen"
+const MUSCLE_NAMES = {
+  peito: "Peito",
+  costas: "Costas",
+  ombros: "Ombros",
+  biceps: "Bíceps",
+  triceps: "Tríceps",
+  pernas: "Pernas",
+  gluteos: "Glúteos",
+  abdomen: "Abdômen"
+};
+
+function hasMuscle(available, muscle) {
+  return available.includes(muscle);
+}
+
+function genderTemplates(gender) {
+  if (gender === "mulher") {
+    return {
+      3: [
+        { name: "A · Glúteos e pernas", focus: ["gluteos", "pernas"] },
+        { name: "B · Superiores", focus: ["costas", "ombros"] },
+        { name: "C · Glúteos", focus: ["gluteos"] }
+      ],
+      4: [
+        { name: "A · Glúteos", focus: ["gluteos"] },
+        { name: "B · Pernas", focus: ["pernas"] },
+        { name: "C · Costas e ombros", focus: ["costas", "ombros"] },
+        { name: "D · Glúteos e pernas", focus: ["gluteos", "pernas"] }
+      ],
+      5: [
+        { name: "A · Glúteos", focus: ["gluteos"] },
+        { name: "B · Pernas", focus: ["pernas"] },
+        { name: "C · Costas", focus: ["costas"] },
+        { name: "D · Ombros e peito", focus: ["ombros", "peito"] },
+        { name: "E · Glúteos e pernas", focus: ["gluteos", "pernas"] }
+      ],
+      6: [
+        { name: "A · Glúteos", focus: ["gluteos"] },
+        { name: "B · Pernas", focus: ["pernas"] },
+        { name: "C · Costas", focus: ["costas"] },
+        { name: "D · Ombros", focus: ["ombros"] },
+        { name: "E · Peito", focus: ["peito"] },
+        { name: "F · Glúteos e pernas", focus: ["gluteos", "pernas"] }
+      ]
+    };
+  }
+  return {
+    3: [
+      { name: "A · Peito", focus: ["peito"] },
+      { name: "B · Costas", focus: ["costas"] },
+      { name: "C · Ombros e braços", focus: ["ombros", "biceps", "triceps"] }
+    ],
+    4: [
+      { name: "A · Peito", focus: ["peito"] },
+      { name: "B · Costas", focus: ["costas"] },
+      { name: "C · Ombros e tríceps", focus: ["ombros", "triceps"] },
+      { name: "D · Bíceps", focus: ["biceps"] }
+    ],
+    5: [
+      { name: "A · Peito", focus: ["peito"] },
+      { name: "B · Costas", focus: ["costas"] },
+      { name: "C · Ombros", focus: ["ombros"] },
+      { name: "D · Braços", focus: ["biceps", "triceps"] },
+      { name: "E · Peito e tríceps", focus: ["peito", "triceps"] }
+    ],
+    6: [
+      { name: "A · Peito", focus: ["peito"] },
+      { name: "B · Costas", focus: ["costas"] },
+      { name: "C · Ombros", focus: ["ombros"] },
+      { name: "D · Bíceps", focus: ["biceps"] },
+      { name: "E · Tríceps", focus: ["triceps"] },
+      { name: "F · Peito e braços", focus: ["peito", "biceps"] }
+    ]
   };
-  if (daysPerWeek <= pool.length) {
-    return pool.slice(0, daysPerWeek).map((muscle, index) => ({
-      name: LETTERS[index] + " · " + (names[muscle] || muscle),
-      focus: [muscle]
-    }));
-  }
-  const days = [];
-  for (let i = 0; i < daysPerWeek; i += 1) {
-    const a = pool[i % pool.length];
-    const b = pool[(i + 1) % pool.length];
-    days.push({
-      name: LETTERS[i] + " · " + (names[a] || a) + (a !== b ? " e " + (names[b] || b).toLowerCase() : ""),
-      focus: a === b ? [a] : [a, b]
-    });
-  }
-  return days;
+}
+
+function dayLabel(focus, index) {
+  const labels = focus.map((muscle) => MUSCLE_NAMES[muscle] || muscle);
+  return LETTERS[index] + " · " + (labels.join(" e ") || ("Dia " + (index + 1)));
+}
+
+function splitFor(daysPerWeek, available, ctx) {
+  const fallback = available.length ? available : ["peito", "costas", "ombros", "biceps"];
+  const templates = genderTemplates(ctx.gender)[daysPerWeek] || genderTemplates(ctx.gender)[4];
+  return templates.slice(0, daysPerWeek).map((day, index) => {
+    let focus = day.focus.filter((muscle) => hasMuscle(available, muscle));
+    if (!focus.length) focus = [fallback[index % fallback.length]];
+    return { name: dayLabel(focus, index), focus };
+  });
 }
 
 function fillDay(day, catalog, ctx, usedGlobal, minCount) {
@@ -162,6 +225,30 @@ function fillDay(day, catalog, ctx, usedGlobal, minCount) {
   return { ...day, exercises: out };
 }
 
+function weekCovers(days, catalogById, muscle) {
+  return days.some((day) => {
+    if ((day.focus || []).includes(muscle)) return true;
+    return (day.exercises || []).some((item) => {
+      const row = catalogById.get(item.exerciseId);
+      return row && row.muscle_id === muscle;
+    });
+  });
+}
+
+function ensureGenderCoverage(days, skeleton, catalog, ctx) {
+  const byId = new Map(catalog.map((row) => [row.id, row]));
+  const required = ctx.gender === "mulher" ? ["gluteos", "pernas"] : ["peito", "biceps"];
+  const available = new Set(catalog.map((row) => row.muscle_id));
+  required.forEach((muscle) => {
+    if (!available.has(muscle) || weekCovers(days, byId, muscle)) return;
+    const slot = skeleton.findIndex((day) => (day.focus || []).includes(muscle));
+    const index = slot >= 0 ? slot : days.length - 1;
+    const sk = skeleton[index] || { name: dayLabel([muscle], index), focus: [muscle] };
+    days[index] = { name: sk.name, focus: sk.focus, exercises: [] };
+  });
+  return days;
+}
+
 function sanitizePlan(raw, catalog, ctx) {
   const byId = new Map(catalog.map((row) => [row.id, row]));
   const availableMuscles = [...new Set(catalog.map((row) => row.muscle_id))];
@@ -169,6 +256,7 @@ function sanitizePlan(raw, catalog, ctx) {
   const minCount = 4;
   const want = targetCount(ctx.level);
   const used = new Set();
+  const skeleton = splitFor(daysPerWeek, availableMuscles, ctx);
 
   let days = Array.isArray(raw && raw.days) ? raw.days : [];
   days = days.slice(0, daysPerWeek).map((day, index) => {
@@ -189,16 +277,17 @@ function sanitizePlan(raw, catalog, ctx) {
       });
     });
     return {
-      name: day.name || LETTERS[index] + " · Dia " + (index + 1),
-      focus: focus.length ? focus : [availableMuscles[index % availableMuscles.length]],
+      name: day.name || skeleton[index].name,
+      focus: focus.length ? focus : skeleton[index].focus,
       exercises
     };
   });
 
-  const skeleton = splitFor(daysPerWeek, availableMuscles);
   while (days.length < daysPerWeek) {
     days.push({ name: skeleton[days.length].name, focus: skeleton[days.length].focus, exercises: [] });
   }
+
+  days = ensureGenderCoverage(days, skeleton, catalog, ctx);
 
   days = days.map((day, index) => {
     const filled = fillDay(day, catalog, ctx, used, Math.max(minCount, want));
@@ -210,10 +299,30 @@ function sanitizePlan(raw, catalog, ctx) {
   return { name, days };
 }
 
-function buildPrompt(ctx, catalogText) {
+function genderPrompt(ctx, available) {
+  const listed = available.join(", ");
+  if (ctx.gender === "mulher") {
+    return [
+      "Aluna MULHER: o foco principal é glúteos (bunda) e pernas.",
+      "Em 4 dias por semana é OBRIGATÓRIO ter: 1 dia de glúteos, 1 dia de pernas, e outro dia de glúteos+pernas. Superiores ficam em no máximo 1 dia.",
+      "Não monte uma semana só de peito/costas/ombro/bíceps para mulher.",
+      "Prefira hip thrust, elevação pélvica, agachamento, leg press, extensora, flexora, abdução e coice — só se o exerciseId existir no catálogo.",
+      "Músculos disponíveis: " + listed + "."
+    ].join("\n");
+  }
+  return [
+    "Aluno HOMEM: o foco principal é peito, bíceps e braço forte (tríceps e ombros).",
+    "Em 4 dias por semana: peito, costas, ombros+tríceps, bíceps. Perna só se daysPerWeek >= 5 e o catálogo tiver pernas.",
+    "Prefira supino, desenvolvimento, remada, rosca e tríceps pulley — só se o exerciseId existir no catálogo.",
+    "Músculos disponíveis: " + listed + "."
+  ].join("\n");
+}
+
+function buildPrompt(ctx, catalogText, available) {
   const system = [
     "Você é o treinador da Academia London Fitness (Brasil).",
     "Monta fichas só com aparelhos e nomes desta academia.",
+    "Leve o sexo do aluno como regra de montagem do split, não como detalhe opcional.",
     "Responda APENAS um JSON válido, sem markdown, sem texto fora do JSON."
   ].join("\n");
 
@@ -226,7 +335,9 @@ function buildPrompt(ctx, catalogText) {
     "- dias por semana: " + ctx.daysPerWeek,
     "- duração da sessão: " + ctx.sessionDurationMin + " min",
     "- equipamentos: " + (ctx.equipment.join(", ") || "academia"),
-    "- foco: " + (ctx.focus.join(", ") || "corpo-inteiro"),
+    "- foco extra: " + (ctx.focus.join(", ") || "seguir prioridade do sexo"),
+    "",
+    genderPrompt(ctx, available),
     "",
     "CATÁLOGO OFICIAL (use SOMENTE estes exerciseId; é proibido inventar, traduzir ou usar nome em inglês/ExerciseDB):",
     catalogText,
@@ -236,14 +347,14 @@ function buildPrompt(ctx, catalogText) {
     "Cada dia: 5 a 8 exercícios, sem repetir o mesmo exerciseId no mesmo dia.",
     "Prefira equipamentos que o aluno tem. Se environment=academia, priorize maquina, polia, halteres, barra.",
     "Não use exercício de nível avancado para iniciante.",
-    "Se o catálogo não tiver perna/tríceps, monte o split só com peito, costas, ombros e bíceps (não invente agachamento).",
+    "Se o catálogo não tiver um músculo pedido, não invente exercício: use outro músculo disponível.",
     "JSON de saída, neste schema e nada mais:",
     JSON.stringify({
       name: "string",
       days: [
         {
-          name: "A · Peito",
-          focus: ["peito"],
+          name: ctx.gender === "mulher" ? "A · Glúteos" : "A · Peito",
+          focus: ctx.gender === "mulher" ? ["gluteos"] : ["peito"],
           exercises: [{ exerciseId: "id-do-catalogo", sets: 3, reps: 10, kg: 0, restSec: 75 }]
         }
       ]
@@ -297,6 +408,7 @@ async function generateFromAi(user, body) {
 
   log.info("plan.generate.start", {
     userId: user.id,
+    gender: ctx.gender,
     goal: ctx.goal,
     level: ctx.level,
     daysPerWeek: ctx.daysPerWeek,
@@ -305,7 +417,7 @@ async function generateFromAi(user, body) {
 
   let raw;
   try {
-    raw = await completeJson(buildPrompt(ctx, catalogRepo.promptLines(catalog)));
+    raw = await completeJson(buildPrompt(ctx, catalogRepo.promptLines(catalog), availableMuscles));
   } catch (err) {
     log.error("plan.generate.ia", { userId: user.id, ...log.errFields(err) });
     if (err.status === 502) throw err;

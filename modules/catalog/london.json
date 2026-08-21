@@ -1374,5 +1374,205 @@
     "equipment": "barra",
     "level": "intermediario",
     "popularity": 1
+  },
+  {
+    "id": "hip-thrust-barra",
+    "displayName": "Hip thrust com barra",
+    "muscle": "gluteos",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 50
+  },
+  {
+    "id": "elevacao-pelvica",
+    "displayName": "Elevação pélvica",
+    "muscle": "gluteos",
+    "equipment": "peso-corporal",
+    "level": "iniciante",
+    "popularity": 46
+  },
+  {
+    "id": "abducao-gluteo-maquina",
+    "displayName": "Abdução de glúteo na máquina",
+    "muscle": "gluteos",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 45
+  },
+  {
+    "id": "coice-gluteo-polia",
+    "displayName": "Coice de glúteo na polia",
+    "muscle": "gluteos",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 44
+  },
+  {
+    "id": "glute-bridge-halteres",
+    "displayName": "Ponte de glúteo com halteres",
+    "muscle": "gluteos",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 42
+  },
+  {
+    "id": "agachamento-sumo-halteres",
+    "displayName": "Agachamento sumô com halteres",
+    "muscle": "gluteos",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 41
+  },
+  {
+    "id": "afundo-bulgaro-halteres",
+    "displayName": "Afundo búlgaro com halteres",
+    "muscle": "gluteos",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 40
+  },
+  {
+    "id": "agachamento-livre-barra",
+    "displayName": "Agachamento livre com barra",
+    "muscle": "pernas",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 50
+  },
+  {
+    "id": "leg-press-45",
+    "displayName": "Leg press 45°",
+    "muscle": "pernas",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 49
+  },
+  {
+    "id": "cadeira-extensora",
+    "displayName": "Cadeira extensora",
+    "muscle": "pernas",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 48
+  },
+  {
+    "id": "mesa-flexora",
+    "displayName": "Mesa flexora",
+    "muscle": "pernas",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 47
+  },
+  {
+    "id": "stiff-halteres",
+    "displayName": "Stiff com halteres",
+    "muscle": "pernas",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 46
+  },
+  {
+    "id": "stiff-barra",
+    "displayName": "Stiff com barra",
+    "muscle": "pernas",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 45
+  },
+  {
+    "id": "agachamento-hack",
+    "displayName": "Agachamento hack",
+    "muscle": "pernas",
+    "equipment": "maquina",
+    "level": "intermediario",
+    "popularity": 44
+  },
+  {
+    "id": "afundo-halteres",
+    "displayName": "Afundo com halteres",
+    "muscle": "pernas",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 43
+  },
+  {
+    "id": "cadeira-adutora",
+    "displayName": "Cadeira adutora",
+    "muscle": "pernas",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 41
+  },
+  {
+    "id": "panturrilha-em-pe-maquina",
+    "displayName": "Panturrilha em pé na máquina",
+    "muscle": "pernas",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 39
+  },
+  {
+    "id": "agachamento-goblet",
+    "displayName": "Agachamento goblet",
+    "muscle": "pernas",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 38
+  },
+  {
+    "id": "triceps-pulley",
+    "displayName": "Tríceps pulley",
+    "muscle": "triceps",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 48
+  },
+  {
+    "id": "triceps-corda-polia",
+    "displayName": "Tríceps corda na polia",
+    "muscle": "triceps",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 46
+  },
+  {
+    "id": "triceps-testa-barra",
+    "displayName": "Tríceps testa com barra",
+    "muscle": "triceps",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 44
+  },
+  {
+    "id": "triceps-coice-halteres",
+    "displayName": "Tríceps coice com halteres",
+    "muscle": "triceps",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 42
+  },
+  {
+    "id": "triceps-frances-halteres",
+    "displayName": "Tríceps francês com halteres",
+    "muscle": "triceps",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 40
+  },
+  {
+    "id": "triceps-banco",
+    "displayName": "Tríceps no banco",
+    "muscle": "triceps",
+    "equipment": "peso-corporal",
+    "level": "iniciante",
+    "popularity": 36
+  },
+  {
+    "id": "mergulho-banco",
+    "displayName": "Mergulho no banco",
+    "muscle": "triceps",
+    "equipment": "peso-corporal",
+    "level": "intermediario",
+    "popularity": 34
   }
 ]
