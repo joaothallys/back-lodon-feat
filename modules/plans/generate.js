@@ -175,6 +175,21 @@ function dayLabel(focus, index) {
   return LETTERS[index] + " · " + (labels.join(" e ") || ("Dia " + (index + 1)));
 }
 
+function catalogForPrompt(catalog, ctx) {
+  const grouped = new Map();
+  catalog.filter((row) => allowedForStudent(row, ctx)).forEach((row) => {
+    const list = grouped.get(row.muscle_id) || [];
+    list.push(row);
+    grouped.set(row.muscle_id, list);
+  });
+  const picked = [];
+  grouped.forEach((list) => {
+    list.sort((a, b) => scoreExercise(b, ctx) - scoreExercise(a, ctx));
+    picked.push(...list.slice(0, 10));
+  });
+  return picked;
+}
+
 function splitFor(daysPerWeek, available, ctx) {
   const fallback = available.length ? available : ["peito", "costas", "ombros", "biceps"];
   const templates = genderTemplates(ctx.gender)[daysPerWeek] || genderTemplates(ctx.gender)[4];
@@ -415,18 +430,23 @@ async function generateFromAi(user, body) {
     catalog: catalog.length
   });
 
-  let raw;
+  const promptCatalog = catalogForPrompt(catalog, ctx);
+  let raw = null;
   try {
-    raw = await completeJson(buildPrompt(ctx, catalogRepo.promptLines(catalog), availableMuscles));
+    raw = await completeJson(buildPrompt(ctx, catalogRepo.promptLines(promptCatalog), availableMuscles));
   } catch (err) {
-    log.error("plan.generate.ia", { userId: user.id, ...log.errFields(err) });
-    if (err.status === 502) throw err;
+    log.warn("plan.generate.fallback", { userId: user.id, ...log.errFields(err) });
+  }
+
+  const plan = sanitizePlan(raw || { name: ctx.name, days: [] }, catalog, ctx);
+  if (!plan.days.length || plan.days.every((day) => !day.exercises.length)) {
+    log.error("plan.generate.empty", { userId: user.id });
     throw httpError(502, "ia_unavailable");
   }
 
-  const plan = sanitizePlan(raw, catalog, ctx);
   log.info("plan.generate.ok", {
     userId: user.id,
+    fallback: !raw,
     name: plan.name,
     days: plan.days.length,
     exercises: plan.days.reduce((sum, day) => sum + (day.exercises || []).length, 0)
