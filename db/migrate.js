@@ -6,6 +6,7 @@ loadEnv(".env");
 
 const { pool } = require("./pool");
 const { ensureMasterUser } = require("../lib/auth");
+const { seedCatalog } = require("../modules/catalog/repo");
 
 async function migrate() {
   if (!process.env.DATABASE_URL) {
@@ -36,6 +37,9 @@ async function migrate() {
 
   const master = await ensureMasterUser();
   if (master) console.log("master " + master.email);
+
+  const catalogCount = await seedCatalog();
+  console.log("catalog " + catalogCount + " exercícios London");
 }
 
 migrate()

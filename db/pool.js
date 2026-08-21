@@ -1,4 +1,5 @@
 const { Pool, types } = require("pg");
+const { log } = require("../lib/logger");
 
 types.setTypeParser(1700, (value) => (value == null ? null : Number(value)));
 
@@ -13,16 +14,34 @@ const pool = new Pool({
 });
 
 pool.on("error", (err) => {
-  console.error("postgres:", err.message);
+  log.error("postgres.pool", log.errFields(err));
 });
 
+async function query(text, params) {
+  const started = Date.now();
+  try {
+    const result = await pool.query(text, params);
+    const ms = Date.now() - started;
+    if (ms >= 500) {
+      log.warn("postgres.slow", { ms, sql: String(text).replace(/\s+/g, " ").slice(0, 160) });
+    }
+    return result;
+  } catch (err) {
+    log.error("postgres.query", {
+      ...log.errFields(err),
+      sql: String(text).replace(/\s+/g, " ").slice(0, 160)
+    });
+    throw err;
+  }
+}
+
 async function one(text, params) {
-  const result = await pool.query(text, params);
+  const result = await query(text, params);
   return result.rows[0] || null;
 }
 
 async function many(text, params) {
-  const result = await pool.query(text, params);
+  const result = await query(text, params);
   return result.rows;
 }
 

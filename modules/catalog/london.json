@@ -1,0 +1,1378 @@
+[
+  {
+    "id": "crucifixo-peitoral-maquina",
+    "displayName": "Crucifixo Peitoral Máquina",
+    "muscle": "peito",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 47
+  },
+  {
+    "id": "supino-inclinado-halteres",
+    "displayName": "Supino Inclinado com Halteres",
+    "muscle": "peito",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 46
+  },
+  {
+    "id": "supino-reto-maquina",
+    "displayName": "Supino Reto Máquina",
+    "muscle": "peito",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 45
+  },
+  {
+    "id": "crucifixo-polia-alta",
+    "displayName": "Crucifixo na Polia Alta",
+    "muscle": "peito",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 44
+  },
+  {
+    "id": "supino-inclinado-maquina",
+    "displayName": "Supino Inclinado Máquina",
+    "muscle": "peito",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 43
+  },
+  {
+    "id": "supino-reto-barra",
+    "displayName": "Supino Reto com Barra",
+    "muscle": "peito",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 42
+  },
+  {
+    "id": "crucifixo-peitoral-halteres",
+    "displayName": "Crucifixo Peitoral com Halteres",
+    "muscle": "peito",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 41
+  },
+  {
+    "id": "crucifixo-polia-baixa",
+    "displayName": "Crucifixo Polia Baixa",
+    "muscle": "peito",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 40
+  },
+  {
+    "id": "crucifixo-supino-declinado-polia-media",
+    "displayName": "Crucifixo Supino Declinado Polia Média",
+    "muscle": "peito",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 39
+  },
+  {
+    "id": "supino-declinado-maquina",
+    "displayName": "Supino Declinado Máquina",
+    "muscle": "peito",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 38
+  },
+  {
+    "id": "supino-declinado-barra",
+    "displayName": "Supino Declinado com Barra",
+    "muscle": "peito",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 37
+  },
+  {
+    "id": "supino-declinado-halteres",
+    "displayName": "Supino Declinado com Halteres",
+    "muscle": "peito",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 36
+  },
+  {
+    "id": "supino-inclinado-barra",
+    "displayName": "Supino Inclinado com Barra",
+    "muscle": "peito",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 35
+  },
+  {
+    "id": "supino-reto-halteres-banco",
+    "displayName": "Supino Reto com Halteres no Banco",
+    "muscle": "peito",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 34
+  },
+  {
+    "id": "pullover-halteres",
+    "displayName": "Pullover com Halteres",
+    "muscle": "peito",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 33
+  },
+  {
+    "id": "flexao-braco",
+    "displayName": "Flexão de Braço",
+    "muscle": "peito",
+    "equipment": "peso-corporal",
+    "level": "iniciante",
+    "popularity": 32
+  },
+  {
+    "id": "supino-fechado-halteres",
+    "displayName": "Supino Fechado com Halteres",
+    "muscle": "peito",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 31
+  },
+  {
+    "id": "supino-reto-deitado-maquina",
+    "displayName": "Supino Reto Deitado na Máquina",
+    "muscle": "peito",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 30
+  },
+  {
+    "id": "supino-reto-pausa-barra",
+    "displayName": "Supino Reto com Pausa na Barra",
+    "muscle": "peito",
+    "equipment": "barra",
+    "level": "avancado",
+    "popularity": 29
+  },
+  {
+    "id": "paralelas",
+    "displayName": "Paralelas",
+    "muscle": "peito",
+    "equipment": "peso-corporal",
+    "level": "avancado",
+    "popularity": 28
+  },
+  {
+    "id": "supino-inclinado-smith",
+    "displayName": "Supino Inclinado Smith",
+    "muscle": "peito",
+    "equipment": "smith",
+    "level": "intermediario",
+    "popularity": 27
+  },
+  {
+    "id": "supino-reto-halteres-pegada-neutra",
+    "displayName": "Supino Reto com Halteres (Pegada Neutra)",
+    "muscle": "peito",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 26
+  },
+  {
+    "id": "crucifixo-peitoral-inclinado-halteres",
+    "displayName": "Crucifixo Peitoral Inclinado com Halteres",
+    "muscle": "peito",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 25
+  },
+  {
+    "id": "flexao-braco-declinada",
+    "displayName": "Flexão de Braço Declinada",
+    "muscle": "peito",
+    "equipment": "peso-corporal",
+    "level": "intermediario",
+    "popularity": 24
+  },
+  {
+    "id": "flexao-braco-fechada",
+    "displayName": "Flexão de Braço Fechada",
+    "muscle": "peito",
+    "equipment": "peso-corporal",
+    "level": "intermediario",
+    "popularity": 23
+  },
+  {
+    "id": "flexao-braco-inclinada-caixa",
+    "displayName": "Flexão de Braço Inclinada na Caixa",
+    "muscle": "peito",
+    "equipment": "peso-corporal",
+    "level": "iniciante",
+    "popularity": 22
+  },
+  {
+    "id": "flexao-ombro-bosu",
+    "displayName": "Flexão de Ombro no Bosu",
+    "muscle": "peito",
+    "equipment": "bosu",
+    "level": "intermediario",
+    "popularity": 21
+  },
+  {
+    "id": "flexao-braco-ajoelhado",
+    "displayName": "Flexão de Braço Ajoelhado",
+    "muscle": "peito",
+    "equipment": "peso-corporal",
+    "level": "iniciante",
+    "popularity": 20
+  },
+  {
+    "id": "supino-alternado-chao-kettlebell",
+    "displayName": "Supino Alternado no Chão com Kettlebell",
+    "muscle": "peito",
+    "equipment": "kettlebell",
+    "level": "intermediario",
+    "popularity": 19
+  },
+  {
+    "id": "supino-reto-halteres-solo",
+    "displayName": "Supino Reto com Halteres no Solo",
+    "muscle": "peito",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 18
+  },
+  {
+    "id": "voador-inclinado-maquina",
+    "displayName": "Voador Inclinado na Máquina",
+    "muscle": "peito",
+    "equipment": "maquina",
+    "level": "intermediario",
+    "popularity": 17
+  },
+  {
+    "id": "voador-em-pe",
+    "displayName": "Voador em Pé",
+    "muscle": "peito",
+    "equipment": "maquina",
+    "level": "intermediario",
+    "popularity": 16
+  },
+  {
+    "id": "crucifixo-deitado-polia",
+    "displayName": "Crucifixo Deitado na Polia",
+    "muscle": "peito",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 15
+  },
+  {
+    "id": "flexao-braco-elastico",
+    "displayName": "Flexão de Braço com Elástico",
+    "muscle": "peito",
+    "equipment": "elastico",
+    "level": "iniciante",
+    "popularity": 14
+  },
+  {
+    "id": "flexao-braco-palmas",
+    "displayName": "Flexão de Braço com Palmas",
+    "muscle": "peito",
+    "equipment": "peso-corporal",
+    "level": "avancado",
+    "popularity": 13
+  },
+  {
+    "id": "flexao-braco-rotacao-tronco",
+    "displayName": "Flexão de Braço com Rotação de Tronco",
+    "muscle": "peito",
+    "equipment": "peso-corporal",
+    "level": "avancado",
+    "popularity": 12
+  },
+  {
+    "id": "supino-declinado-smith",
+    "displayName": "Supino Declinado Smith",
+    "muscle": "peito",
+    "equipment": "smith",
+    "level": "intermediario",
+    "popularity": 11
+  },
+  {
+    "id": "supino-reto-polia",
+    "displayName": "Supino Reto na Polia",
+    "muscle": "peito",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 10
+  },
+  {
+    "id": "flexao-braco-unilateral",
+    "displayName": "Flexão de Braço Unilateral",
+    "muscle": "peito",
+    "equipment": "peso-corporal",
+    "level": "avancado",
+    "popularity": 9
+  },
+  {
+    "id": "supino-reto-unilateral-halteres",
+    "displayName": "Supino Reto Unilateral com Halteres",
+    "muscle": "peito",
+    "equipment": "halteres",
+    "level": "avancado",
+    "popularity": 8
+  },
+  {
+    "id": "supino-reto-smith",
+    "displayName": "Supino Reto Smith",
+    "muscle": "peito",
+    "equipment": "smith",
+    "level": "intermediario",
+    "popularity": 7
+  },
+  {
+    "id": "supino-em-pe-elastico",
+    "displayName": "Supino em Pé com Elástico",
+    "muscle": "peito",
+    "equipment": "elastico",
+    "level": "iniciante",
+    "popularity": 6
+  },
+  {
+    "id": "voador-inclinado-polia",
+    "displayName": "Voador Inclinado na Polia",
+    "muscle": "peito",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 5
+  },
+  {
+    "id": "burpee-com-salto",
+    "displayName": "Burpee com Salto",
+    "muscle": "peito",
+    "equipment": "peso-corporal",
+    "level": "avancado",
+    "popularity": 4
+  },
+  {
+    "id": "alongamento-horizontal-flexao-sentado-inclinando",
+    "displayName": "Alongamento Horizontal e Flexão Sentado Inclinando",
+    "muscle": "peito",
+    "equipment": "peso-corporal",
+    "level": "iniciante",
+    "popularity": 3
+  },
+  {
+    "id": "alongamento-peitoral-acima-cabeca",
+    "displayName": "Alongamento de Peitoral Acima da Cabeça",
+    "muscle": "peito",
+    "equipment": "peso-corporal",
+    "level": "iniciante",
+    "popularity": 2
+  },
+  {
+    "id": "crossover-na-polia",
+    "displayName": "Crossover na Polia",
+    "muscle": "peito",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 1
+  },
+  {
+    "id": "puxador-por-tras",
+    "displayName": "Puxador por Trás",
+    "muscle": "costas",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 38
+  },
+  {
+    "id": "remada-curvada-smith",
+    "displayName": "Remada Curvada no Smith",
+    "muscle": "costas",
+    "equipment": "smith",
+    "level": "intermediario",
+    "popularity": 37
+  },
+  {
+    "id": "barra-fixa-graviton",
+    "displayName": "Barra Fixa no Graviton",
+    "muscle": "costas",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 36
+  },
+  {
+    "id": "muscle-up",
+    "displayName": "Muscle-up",
+    "muscle": "costas",
+    "equipment": "peso-corporal",
+    "level": "avancado",
+    "popularity": 35
+  },
+  {
+    "id": "remada-unilateral-sentado-cabo",
+    "displayName": "Remada Unilateral Sentado no Cabo",
+    "muscle": "costas",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 34
+  },
+  {
+    "id": "pullover-maquina-apoio",
+    "displayName": "Pullover na Máquina com Apoio",
+    "muscle": "costas",
+    "equipment": "maquina",
+    "level": "intermediario",
+    "popularity": 33
+  },
+  {
+    "id": "remada-deitada",
+    "displayName": "Remada Deitada",
+    "muscle": "costas",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 32
+  },
+  {
+    "id": "remada-invertida",
+    "displayName": "Remada Invertida",
+    "muscle": "costas",
+    "equipment": "peso-corporal",
+    "level": "intermediario",
+    "popularity": 31
+  },
+  {
+    "id": "puxada-alta-polia",
+    "displayName": "Puxada Alta na Polia",
+    "muscle": "costas",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 30
+  },
+  {
+    "id": "puxada-frontal-barra",
+    "displayName": "Puxada Frontal com Barra",
+    "muscle": "costas",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 29
+  },
+  {
+    "id": "remada-baixa-cabo",
+    "displayName": "Remada Baixa no Cabo",
+    "muscle": "costas",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 28
+  },
+  {
+    "id": "remada-curvada-barra",
+    "displayName": "Remada Curvada com Barra",
+    "muscle": "costas",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 27
+  },
+  {
+    "id": "remada-unilateral-halteres",
+    "displayName": "Remada Unilateral com Halteres",
+    "muscle": "costas",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 26
+  },
+  {
+    "id": "pullover-halteres-costas",
+    "displayName": "Pullover com Halteres",
+    "muscle": "costas",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 25
+  },
+  {
+    "id": "barra-fixa",
+    "displayName": "Barra Fixa",
+    "muscle": "costas",
+    "equipment": "peso-corporal",
+    "level": "intermediario",
+    "popularity": 24
+  },
+  {
+    "id": "barra-fixa-pegada-neutra",
+    "displayName": "Barra Fixa Pegada Neutra",
+    "muscle": "costas",
+    "equipment": "peso-corporal",
+    "level": "intermediario",
+    "popularity": 23
+  },
+  {
+    "id": "puxada-neutra-maquina",
+    "displayName": "Puxada Neutra na Máquina",
+    "muscle": "costas",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 22
+  },
+  {
+    "id": "remada-maquina",
+    "displayName": "Remada Máquina",
+    "muscle": "costas",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 21
+  },
+  {
+    "id": "remada-cavalinho",
+    "displayName": "Remada Cavalinho",
+    "muscle": "costas",
+    "equipment": "maquina",
+    "level": "intermediario",
+    "popularity": 20
+  },
+  {
+    "id": "remada-t-bar",
+    "displayName": "Remada T-Bar",
+    "muscle": "costas",
+    "equipment": "maquina",
+    "level": "intermediario",
+    "popularity": 19
+  },
+  {
+    "id": "remada-serrote",
+    "displayName": "Remada Serrote",
+    "muscle": "costas",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 18
+  },
+  {
+    "id": "remada-alta",
+    "displayName": "Remada Alta",
+    "muscle": "costas",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 17
+  },
+  {
+    "id": "puxada-corda",
+    "displayName": "Puxada com Corda",
+    "muscle": "costas",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 16
+  },
+  {
+    "id": "puxada-unilateral-polia",
+    "displayName": "Puxada Unilateral na Polia",
+    "muscle": "costas",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 15
+  },
+  {
+    "id": "pulldown-polia",
+    "displayName": "Pulldown na Polia",
+    "muscle": "costas",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 14
+  },
+  {
+    "id": "puxada-pegada-aberta",
+    "displayName": "Puxada com Pegada Aberta",
+    "muscle": "costas",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 13
+  },
+  {
+    "id": "puxada-pegada-fechada",
+    "displayName": "Puxada com Pegada Fechada",
+    "muscle": "costas",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 12
+  },
+  {
+    "id": "remada-maquina-pegada-neutra",
+    "displayName": "Remada Máquina Pegada Neutra",
+    "muscle": "costas",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 11
+  },
+  {
+    "id": "remada-sentada-maquina",
+    "displayName": "Remada Sentada Máquina",
+    "muscle": "costas",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 10
+  },
+  {
+    "id": "remada-inclinada",
+    "displayName": "Remada Inclinada",
+    "muscle": "costas",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 9
+  },
+  {
+    "id": "extensao-lombar",
+    "displayName": "Extensão Lombar",
+    "muscle": "costas",
+    "equipment": "peso-corporal",
+    "level": "iniciante",
+    "popularity": 8
+  },
+  {
+    "id": "superman",
+    "displayName": "Superman",
+    "muscle": "costas",
+    "equipment": "peso-corporal",
+    "level": "iniciante",
+    "popularity": 7
+  },
+  {
+    "id": "bom-dia-barra",
+    "displayName": "Bom Dia com Barra",
+    "muscle": "costas",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 6
+  },
+  {
+    "id": "encolhimento-trapezio",
+    "displayName": "Encolhimento para Trapézio",
+    "muscle": "costas",
+    "equipment": "barra",
+    "level": "iniciante",
+    "popularity": 5
+  },
+  {
+    "id": "remada-alta-halteres",
+    "displayName": "Remada Alta com Halteres",
+    "muscle": "costas",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 4
+  },
+  {
+    "id": "puxada-assistida",
+    "displayName": "Puxada Assistida",
+    "muscle": "costas",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 3
+  },
+  {
+    "id": "remada-livre",
+    "displayName": "Remada Livre",
+    "muscle": "costas",
+    "equipment": "peso-corporal",
+    "level": "iniciante",
+    "popularity": 2
+  },
+  {
+    "id": "remada-pendlay",
+    "displayName": "Remada Pendlay",
+    "muscle": "costas",
+    "equipment": "barra",
+    "level": "avancado",
+    "popularity": 1
+  },
+  {
+    "id": "desenvolvimento-maquina",
+    "displayName": "Desenvolvimento Máquina",
+    "muscle": "ombros",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 56
+  },
+  {
+    "id": "desenvolvimento-sentado-halteres",
+    "displayName": "Desenvolvimento Sentado com Halteres",
+    "muscle": "ombros",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 55
+  },
+  {
+    "id": "desenvolvimento-maquina-pegada-neutra",
+    "displayName": "Desenvolvimento Máquina (Pegada Neutra)",
+    "muscle": "ombros",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 54
+  },
+  {
+    "id": "desenvolvimento-ombros-sentado",
+    "displayName": "Desenvolvimento de Ombros Sentado",
+    "muscle": "ombros",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 53
+  },
+  {
+    "id": "elevacao-lateral-halteres",
+    "displayName": "Elevação Lateral com Halteres",
+    "muscle": "ombros",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 52
+  },
+  {
+    "id": "elevacao-lateral-polia-unilateral",
+    "displayName": "Elevação Lateral na Polia Unilateral",
+    "muscle": "ombros",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 51
+  },
+  {
+    "id": "elevacao-lateral-sentado-halteres",
+    "displayName": "Elevação Lateral Sentado com Halteres",
+    "muscle": "ombros",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 50
+  },
+  {
+    "id": "elevacao-lateral-polia",
+    "displayName": "Elevação Lateral na Polia",
+    "muscle": "ombros",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 49
+  },
+  {
+    "id": "elevacao-lateral-maquina",
+    "displayName": "Elevação Lateral na Máquina",
+    "muscle": "ombros",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 48
+  },
+  {
+    "id": "elevacao-lateral-inclinada-halteres",
+    "displayName": "Elevação Lateral Inclinada com Halteres",
+    "muscle": "ombros",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 47
+  },
+  {
+    "id": "crucifixo-inverso-maquina",
+    "displayName": "Crucifixo Inverso Máquina",
+    "muscle": "ombros",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 46
+  },
+  {
+    "id": "crucifixo-inverso-halteres",
+    "displayName": "Crucifixo Inverso com Halteres",
+    "muscle": "ombros",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 45
+  },
+  {
+    "id": "crucifixo-inverso-polia",
+    "displayName": "Crucifixo Inverso na Polia",
+    "muscle": "ombros",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 44
+  },
+  {
+    "id": "crucifixo-inverso-curvado-halteres",
+    "displayName": "Crucifixo Inverso Curvado com Halteres",
+    "muscle": "ombros",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 43
+  },
+  {
+    "id": "crucifixo-inverso-banco-inclinado",
+    "displayName": "Crucifixo Inverso no Banco Inclinado",
+    "muscle": "ombros",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 42
+  },
+  {
+    "id": "rotacao-externa-ombro-polia",
+    "displayName": "Rotação Externa de Ombro na Polia",
+    "muscle": "ombros",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 41
+  },
+  {
+    "id": "rotacao-interna-ombro-polia",
+    "displayName": "Rotação Interna de Ombro na Polia",
+    "muscle": "ombros",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 40
+  },
+  {
+    "id": "rotacao-externa-halteres",
+    "displayName": "Rotação Externa com Halteres",
+    "muscle": "ombros",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 39
+  },
+  {
+    "id": "rotacao-interna-halteres",
+    "displayName": "Rotação Interna com Halteres",
+    "muscle": "ombros",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 38
+  },
+  {
+    "id": "desenvolvimento-barra",
+    "displayName": "Desenvolvimento com Barra",
+    "muscle": "ombros",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 37
+  },
+  {
+    "id": "desenvolvimento-militar",
+    "displayName": "Desenvolvimento Militar",
+    "muscle": "ombros",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 36
+  },
+  {
+    "id": "desenvolvimento-arnold",
+    "displayName": "Desenvolvimento Arnold",
+    "muscle": "ombros",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 35
+  },
+  {
+    "id": "desenvolvimento-alternado-kettlebell",
+    "displayName": "Desenvolvimento Alternado com Kettlebell",
+    "muscle": "ombros",
+    "equipment": "kettlebell",
+    "level": "intermediario",
+    "popularity": 34
+  },
+  {
+    "id": "desenvolvimento-kettlebell",
+    "displayName": "Desenvolvimento com Kettlebell",
+    "muscle": "ombros",
+    "equipment": "kettlebell",
+    "level": "intermediario",
+    "popularity": 33
+  },
+  {
+    "id": "desenvolvimento-smith",
+    "displayName": "Desenvolvimento Smith",
+    "muscle": "ombros",
+    "equipment": "smith",
+    "level": "intermediario",
+    "popularity": 32
+  },
+  {
+    "id": "desenvolvimento-maquina-hammer",
+    "displayName": "Desenvolvimento na Máquina Hammer",
+    "muscle": "ombros",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 31
+  },
+  {
+    "id": "desenvolvimento-unilateral-maquina",
+    "displayName": "Desenvolvimento Unilateral Máquina",
+    "muscle": "ombros",
+    "equipment": "maquina",
+    "level": "intermediario",
+    "popularity": 30
+  },
+  {
+    "id": "elevacao-frontal-halteres",
+    "displayName": "Elevação Frontal com Halteres",
+    "muscle": "ombros",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 29
+  },
+  {
+    "id": "elevacao-frontal-barra",
+    "displayName": "Elevação Frontal com Barra",
+    "muscle": "ombros",
+    "equipment": "barra",
+    "level": "iniciante",
+    "popularity": 28
+  },
+  {
+    "id": "elevacao-frontal-polia",
+    "displayName": "Elevação Frontal na Polia",
+    "muscle": "ombros",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 27
+  },
+  {
+    "id": "elevacao-frontal-unilateral-polia",
+    "displayName": "Elevação Frontal Unilateral na Polia",
+    "muscle": "ombros",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 26
+  },
+  {
+    "id": "elevacao-frontal-elastico",
+    "displayName": "Elevação Frontal com Elástico",
+    "muscle": "ombros",
+    "equipment": "elastico",
+    "level": "iniciante",
+    "popularity": 25
+  },
+  {
+    "id": "remada-alta-halteres-ombros",
+    "displayName": "Remada Alta com Halteres",
+    "muscle": "ombros",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 24
+  },
+  {
+    "id": "remada-alta-barra",
+    "displayName": "Remada Alta com Barra",
+    "muscle": "ombros",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 23
+  },
+  {
+    "id": "remada-alta-polia",
+    "displayName": "Remada Alta na Polia",
+    "muscle": "ombros",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 22
+  },
+  {
+    "id": "remada-alta-kettlebell",
+    "displayName": "Remada Alta com Kettlebell",
+    "muscle": "ombros",
+    "equipment": "kettlebell",
+    "level": "intermediario",
+    "popularity": 21
+  },
+  {
+    "id": "face-pull-pe-corda",
+    "displayName": "Face Pull em Pé com Corda na Polia",
+    "muscle": "ombros",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 20
+  },
+  {
+    "id": "face-pull-polia",
+    "displayName": "Face Pull na Polia",
+    "muscle": "ombros",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 19
+  },
+  {
+    "id": "crucifixo-inverso-crossover",
+    "displayName": "Crucifixo Inverso no Cross Over",
+    "muscle": "ombros",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 18
+  },
+  {
+    "id": "clean-press-barra",
+    "displayName": "Clean e Press com Barra",
+    "muscle": "ombros",
+    "equipment": "barra",
+    "level": "avancado",
+    "popularity": 17
+  },
+  {
+    "id": "thruster-alternado-kettlebell",
+    "displayName": "Thruster Alternado com Kettlebell",
+    "muscle": "ombros",
+    "equipment": "kettlebell",
+    "level": "avancado",
+    "popularity": 16
+  },
+  {
+    "id": "push-press-kettlebell",
+    "displayName": "Push Press com Kettlebell",
+    "muscle": "ombros",
+    "equipment": "kettlebell",
+    "level": "avancado",
+    "popularity": 15
+  },
+  {
+    "id": "pike-push-up",
+    "displayName": "Pike Push Up",
+    "muscle": "ombros",
+    "equipment": "peso-corporal",
+    "level": "avancado",
+    "popularity": 14
+  },
+  {
+    "id": "handstand-push-up",
+    "displayName": "Handstand Push Up",
+    "muscle": "ombros",
+    "equipment": "peso-corporal",
+    "level": "avancado",
+    "popularity": 13
+  },
+  {
+    "id": "burpee-halteres",
+    "displayName": "Burpee com Halteres",
+    "muscle": "ombros",
+    "equipment": "halteres",
+    "level": "avancado",
+    "popularity": 12
+  },
+  {
+    "id": "burpee-salto-horizontal-flexao",
+    "displayName": "Burpee com Salto Horizontal e Flexão",
+    "muscle": "ombros",
+    "equipment": "peso-corporal",
+    "level": "avancado",
+    "popularity": 11
+  },
+  {
+    "id": "desenvolvimento-ajoelhado-unilateral",
+    "displayName": "Desenvolvimento Ajoelhado Unilateral",
+    "muscle": "ombros",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 10
+  },
+  {
+    "id": "desenvolvimento-unilateral-halteres",
+    "displayName": "Desenvolvimento Unilateral com Halteres",
+    "muscle": "ombros",
+    "equipment": "halteres",
+    "level": "avancado",
+    "popularity": 9
+  },
+  {
+    "id": "kettlebell-turkish-get-up",
+    "displayName": "Kettlebell Turkish Get-Up",
+    "muscle": "ombros",
+    "equipment": "kettlebell",
+    "level": "avancado",
+    "popularity": 8
+  },
+  {
+    "id": "rotacao-kettlebell-redor-corpo",
+    "displayName": "Rotação de Kettlebell ao Redor do Corpo",
+    "muscle": "ombros",
+    "equipment": "kettlebell",
+    "level": "intermediario",
+    "popularity": 7
+  },
+  {
+    "id": "extensao-ombro",
+    "displayName": "Extensão de Ombro",
+    "muscle": "ombros",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 6
+  },
+  {
+    "id": "alongamento-posterior-ombro",
+    "displayName": "Alongamento Posterior de Ombro",
+    "muscle": "ombros",
+    "equipment": "peso-corporal",
+    "level": "iniciante",
+    "popularity": 5
+  },
+  {
+    "id": "alongamento-rotadores-ombro",
+    "displayName": "Alongamento dos Rotadores do Ombro",
+    "muscle": "ombros",
+    "equipment": "peso-corporal",
+    "level": "iniciante",
+    "popularity": 4
+  },
+  {
+    "id": "machine-lateral-raise",
+    "displayName": "Machine Lateral Raise",
+    "muscle": "ombros",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 3
+  },
+  {
+    "id": "elevacao-ombro-em-pe",
+    "displayName": "Elevação de Ombro em Pé",
+    "muscle": "ombros",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 2
+  },
+  {
+    "id": "elevacao-lateral-landmine",
+    "displayName": "Elevação Lateral Landmine",
+    "muscle": "ombros",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 1
+  },
+  {
+    "id": "rosca-direta-barra-reta",
+    "displayName": "Rosca Direta com Barra Reta",
+    "muscle": "biceps",
+    "equipment": "barra",
+    "level": "iniciante",
+    "popularity": 31
+  },
+  {
+    "id": "rosca-biceps-halteres-alternada",
+    "displayName": "Rosca Bíceps com Halteres (Alternada)",
+    "muscle": "biceps",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 30
+  },
+  {
+    "id": "rosca-direta-barra-w",
+    "displayName": "Rosca Direta com Barra W",
+    "muscle": "biceps",
+    "equipment": "barra",
+    "level": "iniciante",
+    "popularity": 29
+  },
+  {
+    "id": "rosca-scott-barra-w",
+    "displayName": "Rosca Scott com Barra W",
+    "muscle": "biceps",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 28
+  },
+  {
+    "id": "rosca-unilateral-biceps-polia",
+    "displayName": "Rosca Unilateral de Bíceps na Polia",
+    "muscle": "biceps",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 27
+  },
+  {
+    "id": "rosca-biceps-alongada-unilateral-polia",
+    "displayName": "Rosca Bíceps Alongada Unilateral na Polia",
+    "muscle": "biceps",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 26
+  },
+  {
+    "id": "rosca-biceps-halteres",
+    "displayName": "Rosca Bíceps com Halteres",
+    "muscle": "biceps",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 25
+  },
+  {
+    "id": "rosca-martelo-cruzada-halteres",
+    "displayName": "Rosca Martelo Cruzada com Halteres",
+    "muscle": "biceps",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 24
+  },
+  {
+    "id": "rosca-martelo-halteres",
+    "displayName": "Rosca Martelo com Halteres",
+    "muscle": "biceps",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 23
+  },
+  {
+    "id": "rosca-martelo-polia-corda",
+    "displayName": "Rosca Martelo na Polia com Corda",
+    "muscle": "biceps",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 22
+  },
+  {
+    "id": "rosca-scott-maquina",
+    "displayName": "Rosca Scott na Máquina",
+    "muscle": "biceps",
+    "equipment": "maquina",
+    "level": "iniciante",
+    "popularity": 21
+  },
+  {
+    "id": "rosca-biceps-polia-baixa-barra-reta",
+    "displayName": "Rosca bíceps na Polia Baixa (Barra Reta)",
+    "muscle": "biceps",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 20
+  },
+  {
+    "id": "rosca-biceps-sentado-halteres",
+    "displayName": "Rosca Bíceps Sentado com Halteres",
+    "muscle": "biceps",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 19
+  },
+  {
+    "id": "rosca-biceps-sobre-cabeca-polia",
+    "displayName": "Rosca Bíceps Sobre a Cabeça na Polia",
+    "muscle": "biceps",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 18
+  },
+  {
+    "id": "rosca-concentrada",
+    "displayName": "Rosca Concentrada",
+    "muscle": "biceps",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 17
+  },
+  {
+    "id": "rosca-biceps-banco-inclinado",
+    "displayName": "Rosca bíceps no Banco Inclinado",
+    "muscle": "biceps",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 16
+  },
+  {
+    "id": "rosca-biceps-inversa-polia-baixa",
+    "displayName": "Rosca bíceps inversa na Polia Baixa",
+    "muscle": "biceps",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 15
+  },
+  {
+    "id": "rosca-direta-um-braco-polia",
+    "displayName": "Rosca Direta com Um Braço na Polia",
+    "muscle": "biceps",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 14
+  },
+  {
+    "id": "rosca-martelo-cruzada-polia",
+    "displayName": "Rosca Martelo Cruzada na Polia",
+    "muscle": "biceps",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 13
+  },
+  {
+    "id": "rosca-biceps-spider-halteres",
+    "displayName": "Rosca bíceps Spider com Halteres",
+    "muscle": "biceps",
+    "equipment": "halteres",
+    "level": "avancado",
+    "popularity": 12
+  },
+  {
+    "id": "rosca-biceps-barra-reta-invertida",
+    "displayName": "Rosca bíceps com Barra Reta",
+    "muscle": "biceps",
+    "equipment": "peso-corporal",
+    "level": "intermediario",
+    "popularity": 11
+  },
+  {
+    "id": "rosca-biceps-polia-baixa-barra-w",
+    "displayName": "Rosca bíceps na Polia Baixa (Barra W)",
+    "muscle": "biceps",
+    "equipment": "polia",
+    "level": "iniciante",
+    "popularity": 10
+  },
+  {
+    "id": "rosca-martelo-sentado-halteres",
+    "displayName": "Rosca martelo sentado com Halteres",
+    "muscle": "biceps",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 9
+  },
+  {
+    "id": "rosca-scott-barra-reta",
+    "displayName": "Rosca Scott com Barra Reta",
+    "muscle": "biceps",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 8
+  },
+  {
+    "id": "rosca-scott-halteres",
+    "displayName": "Rosca Scott com Halteres",
+    "muscle": "biceps",
+    "equipment": "halteres",
+    "level": "intermediario",
+    "popularity": 7
+  },
+  {
+    "id": "rosca-biceps-sentado-alternado-halteres",
+    "displayName": "Rosca bíceps sentado alternado com Halteres",
+    "muscle": "biceps",
+    "equipment": "halteres",
+    "level": "iniciante",
+    "popularity": 6
+  },
+  {
+    "id": "biceps-unilateral-polia-alta",
+    "displayName": "Bíceps unilateral na Polia Alta",
+    "muscle": "biceps",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 5
+  },
+  {
+    "id": "rosca-biceps-drag-barra",
+    "displayName": "Rosca Bíceps Drag com Barra",
+    "muscle": "biceps",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 4
+  },
+  {
+    "id": "rosca-biceps-alternada-elastico",
+    "displayName": "Rosca Bíceps alternada com Elástico",
+    "muscle": "biceps",
+    "equipment": "elastico",
+    "level": "iniciante",
+    "popularity": 3
+  },
+  {
+    "id": "rosca-inclinada-polia",
+    "displayName": "Rosca Inclinada na Polia",
+    "muscle": "biceps",
+    "equipment": "polia",
+    "level": "intermediario",
+    "popularity": 2
+  },
+  {
+    "id": "rosca-biceps-inversa-barra-reta",
+    "displayName": "Rosca bíceps inversa com Barra Reta",
+    "muscle": "biceps",
+    "equipment": "barra",
+    "level": "intermediario",
+    "popularity": 1
+  }
+]

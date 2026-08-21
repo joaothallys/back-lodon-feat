@@ -133,6 +133,7 @@
           <span class="pill">CRUD de fichas</span>
           <span class="pill">Histórico ao finalizar</span>
           <span class="pill">Collection Postman em /docs</span>
+          <span class="pill">Plano IA via Groq</span>
         </div>
       </div>
 
@@ -176,6 +177,70 @@ Content-Type: application/json</pre>
           <div><strong>2. Começar (opcional)</strong> — <code>POST /api/sessions</code> copia a ficha ou um dia do plano. Se o app fechar, <code>GET /api/sessions/current</code> retoma.</div>
           <div><strong>3. Finalizar = salvar</strong> — <code>POST /api/sessions/complete</code>. Grava séries, volume, kcal e PRs. Sem sessão aberta, cria o registro já como <code>completed</code>.</div>
           <div><strong>4. Ver histórico</strong> — <code>GET /api/history</code> lista; <code>GET /api/history/:id</code> mostra série a série.</div>
+        </div>
+      </section>
+
+      <section id="plano-ia">
+        <h2>Plano com IA — Front ↔ Back ↔ Groq</h2>
+        <p class="lead">
+          O aluno termina o onboarding. O <strong>front não chama IA</strong>.
+          O back chama a Groq, valida cada <code>exerciseId</code> no catálogo London (172 IDs: peito, costas, ombros, bíceps),
+          grava o plano no Postgres e marca como ativo. O front só mostra <code>GET /api/plans/active</code>.
+        </p>
+        <div class="steps">
+          <div><strong>1. Front envia</strong> — <code>POST /api/plans/generate</code> com perfil (gender, goal, level, environment, daysPerWeek, equipment, focus). Auth Bearer.</div>
+          <div><strong>2. Back monta o prompt</strong> — injeta o catálogo no formato <code>id | displayName | musculo | equipamento | nivel</code>. Modelo Groq, JSON mode, 45s.</div>
+          <div><strong>3. Valida e grava</strong> — dropa id inventado ou da ExerciseDB. Dia com &lt; 4 exercícios válidos é completado com os mais populares daquele músculo + equipamento (sem IA).</div>
+          <div><strong>4. Front lê</strong> — a resposta já é o plano persistido (id do plano e de cada dia). Depois, <code>GET /api/plans/active</code> devolve o mesmo objeto.</div>
+        </div>
+        <div class="grid">
+          <div class="card">
+            <h3>Request do front</h3>
+            <pre>{
+  "source": "ia",
+  "name": "Plano hipertrofia",
+  "gender": "homem",
+  "goal": "hipertrofia",
+  "level": "intermediario",
+  "environment": "academia",
+  "daysPerWeek": 4,
+  "sessionDurationMin": 60,
+  "equipment": ["halteres", "barra", "polia", "maquina"],
+  "focus": ["corpo-inteiro"]
+}</pre>
+          </div>
+          <div class="card">
+            <h3>Resposta (plano salvo)</h3>
+            <pre>{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "name": "Plano hipertrofia · 4 dias",
+    "source": "ia",
+    "goal": "hipertrofia",
+    "level": "intermediario",
+    "daysPerWeek": 4,
+    "days": [
+      {
+        "id": "uuid",
+        "name": "A · Peito",
+        "focus": ["peito"],
+        "exercises": [
+          { "exerciseId": "supino-reto-barra", "sets": 4, "reps": 8, "kg": 0, "restSec": 90 }
+        ]
+      }
+    ]
+  }
+}</pre>
+          </div>
+        </div>
+        <div class="card">
+          <p><strong>Enums:</strong> gender <code>homem | mulher</code> · goal <code>hipertrofia | forca | emagrecimento | definicao</code> · level <code>iniciante | intermediario | avancado</code> · environment <code>academia | casa | peso-corporal</code> · daysPerWeek <code>3–6</code>.</p>
+          <p><strong>equipment[]:</strong> halteres, barra, polia, maquina, banco, elastico, kettlebell, peso-corporal.</p>
+          <p><strong>focus[]:</strong> peito, costas, ombros, biceps, triceps, pernas, gluteos, abdomen, corpo-inteiro. Vazio ou <code>corpo-inteiro</code> = corpo inteiro no catálogo disponível.</p>
+          <p><strong>Regras:</strong> days.length = daysPerWeek · 5–8 exercícios/dia (iniciante 5–6, avançado 7–8) · kg sempre 0 · rest iniciante 60 / intermediário 75 / força 90–120 · academia prioriza máquina, polia, halteres, barra · sem perna/tríceps no catálogo, o split usa só peito, costas, ombros e bíceps.</p>
+          <p><strong>Erro:</strong> timeout ou Groq fora → <code>502 { "success": false, "error": "ia_unavailable" }</code>. O front usa fallback local.</p>
+          <p><strong>O back não faz:</strong> devolver texto cru da IA · salvar exercício fora do catálogo · usar programId de template no lugar da IA · misturar ficha (<code>/api/workouts</code>) com plano ativo (<code>/api/plans</code>).</p>
         </div>
       </section>
 
@@ -296,14 +361,15 @@ const groups = [
   {
     id: "plans",
     title: "Plano da semana",
-    lead: "Um único workout_plans.is_active = true por usuário. Generate cria a estrutura A/B/C se days não for enviado.",
+    lead: "Um único is_active = true por usuário. Generate chama Groq (o front não fala com a IA), valida o catálogo London e já devolve o plano gravado.",
     routes: [
       { method: "GET", path: "/api/plans", auth: true, desc: "Todos os planos do aluno." },
       { method: "GET", path: "/api/plans/active", auth: true, desc: "Plano ativo, com dias, foco e exercícios." },
       {
         method: "POST", path: "/api/plans/generate", auth: true,
-        desc: "Gera plano e já o deixa ativo. Sem days, usa template 3–6 dias.",
-        body: { name: "Hipertrofia 4x", source: "ia", programId: "hipertrofia", goal: "hipertrofia", level: "intermediario", daysPerWeek: 4 }
+        desc: "O front NÃO chama IA. O back chama Groq, valida exerciseId no catálogo London, completa dia com <4 exercícios via fallback, grava e marca ativo. Timeout 45s → 502 ia_unavailable.",
+        body: { source: "ia", name: "Plano hipertrofia", gender: "homem", goal: "hipertrofia", level: "intermediario", environment: "academia", daysPerWeek: 4, sessionDurationMin: 60, equipment: ["halteres", "barra", "polia", "maquina"], focus: ["corpo-inteiro"] },
+        out: { success: true, data: { id: "uuid", name: "Plano hipertrofia · 4 dias", source: "ia", goal: "hipertrofia", level: "intermediario", daysPerWeek: 4, days: [{ id: "uuid", name: "A · Peito", focus: ["peito"], exercises: [{ exerciseId: "supino-reto-barra", sets: 4, reps: 8, kg: 0, restSec: 90 }] }] } }
       },
       { method: "PUT", path: "/api/plans/active", auth: true, desc: "Troca o plano ativo.", body: { planId: "uuid" } },
       { method: "GET", path: "/api/plans/:id", auth: true, desc: "Detalhe de um plano." },
@@ -434,7 +500,10 @@ const enums = [
   ["payment.method", "pix | card | boleto | cash"],
   ["set.type", "W | N | D | S"],
   ["session.sourceType", "plan_day | custom | fast | single"],
-  ["session.status", "in_progress | completed | abandoned"]
+  ["session.status", "in_progress | completed | abandoned"],
+  ["generate.gender", "homem | mulher"],
+  ["generate.goal", "hipertrofia | forca | emagrecimento | definicao"],
+  ["generate.equipment", "halteres | barra | polia | maquina | banco | elastico | kettlebell | peso-corporal"]
 ];
 
 function esc(s) { return String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
@@ -448,6 +517,7 @@ nav.innerHTML = `
     <h4>Guia</h4>
     <a href="#intro">Como autenticar</a>
     <a href="#fluxo">Ficha × treino feito</a>
+    <a href="#plano-ia">Plano com IA (Groq)</a>
   </div>
 ` + groups.map((g) => `
   <div class="nav-group">

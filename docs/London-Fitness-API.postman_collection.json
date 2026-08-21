@@ -538,7 +538,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Hipertrofia 4x\",\n  \"source\": \"ia\",\n  \"programId\": \"hipertrofia\",\n  \"goal\": \"hipertrofia\",\n  \"level\": \"intermediario\",\n  \"daysPerWeek\": 4\n}"
+              "raw": "{\n  \"source\": \"ia\",\n  \"name\": \"Plano hipertrofia\",\n  \"gender\": \"homem\",\n  \"goal\": \"hipertrofia\",\n  \"level\": \"intermediario\",\n  \"environment\": \"academia\",\n  \"daysPerWeek\": 4,\n  \"sessionDurationMin\": 60,\n  \"equipment\": [\"halteres\", \"barra\", \"polia\", \"maquina\"],\n  \"focus\": [\"corpo-inteiro\"]\n}"
             },
             "url": "{{baseUrl}}/api/plans/generate"
           }

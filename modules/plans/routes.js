@@ -1,35 +1,7 @@
 const { one, many, camel, pool } = require("../../db/pool");
 const { ok, readJson, matchPath, required, httpError } = require("../../lib/http");
 const { requireUser } = require("../../lib/auth");
-
-const TEMPLATES = {
-  3: [
-    { name: "A · Superiores", focus: ["peito", "costas", "ombros", "bracos"] },
-    { name: "B · Inferiores", focus: ["pernas"] },
-    { name: "C · Full body", focus: ["peito", "costas", "pernas"] }
-  ],
-  4: [
-    { name: "A · Peito e tríceps", focus: ["peito", "triceps"] },
-    { name: "B · Costas e bíceps", focus: ["costas", "biceps"] },
-    { name: "C · Pernas", focus: ["pernas"] },
-    { name: "D · Ombros e core", focus: ["ombros"] }
-  ],
-  5: [
-    { name: "A · Peito", focus: ["peito"] },
-    { name: "B · Costas", focus: ["costas"] },
-    { name: "C · Pernas", focus: ["pernas"] },
-    { name: "D · Ombros", focus: ["ombros"] },
-    { name: "E · Braços", focus: ["biceps", "triceps"] }
-  ],
-  6: [
-    { name: "A · Peito", focus: ["peito"] },
-    { name: "B · Costas", focus: ["costas"] },
-    { name: "C · Ombros", focus: ["ombros"] },
-    { name: "D · Pernas", focus: ["pernas"] },
-    { name: "E · Braços", focus: ["biceps", "triceps"] },
-    { name: "F · Core e cardio", focus: ["abdomen"] }
-  ]
-};
+const { generateFromAi } = require("./generate");
 
 function normalizeExercises(list) {
   if (!Array.isArray(list)) return [];
@@ -148,10 +120,7 @@ async function handle(req, res, url) {
   if (req.method === "POST" && matchPath(pathname, "/api/plans/generate")) {
     const user = await requireUser(req);
     const body = await readJson(req);
-    const daysPerWeek = Number(body.daysPerWeek) || 4;
-    const days = Array.isArray(body.days) && body.days.length
-      ? body.days
-      : (TEMPLATES[daysPerWeek] || TEMPLATES[4]);
+    const generated = await generateFromAi(user, body);
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
@@ -162,19 +131,17 @@ async function handle(req, res, url) {
       const plan = (await client.query(
         `INSERT INTO workout_plans
            (user_id, name, source, program_id, goal, level, days_per_week, is_active, generated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, true, now())
+         VALUES ($1, $2, 'ia', NULL, $3, $4, $5, true, now())
          RETURNING *`,
         [
           user.id,
-          body.name || "Plano " + daysPerWeek + "x",
-          body.source || "ia",
-          body.programId || null,
-          body.goal || null,
-          body.level || null,
-          daysPerWeek
+          generated.plan.name,
+          generated.ctx.goal,
+          generated.ctx.level,
+          generated.ctx.daysPerWeek
         ]
       )).rows[0];
-      await insertDays(client, plan.id, days);
+      await insertDays(client, plan.id, generated.plan.days);
       await client.query("COMMIT");
       return ok(res, { data: await loadPlan(plan) }, 201);
     } catch (err) {
