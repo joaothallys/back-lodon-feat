@@ -8,6 +8,7 @@ const {
   publicUser,
   rotateRefresh,
   revokeRefresh,
+  deleteOwnAccount,
   newMemberCode
 } = require("../../lib/auth");
 
@@ -127,6 +128,12 @@ async function handle(req, res, url) {
   if (req.method === "GET" && matchPath(pathname, "/api/auth/me")) {
     const user = await requireUser(req);
     return ok(res, { data: await publicUser(user) });
+  }
+
+  if (req.method === "DELETE" && matchPath(pathname, "/api/auth/account")) {
+    const user = await requireUser(req);
+    const deleted = await deleteOwnAccount(user);
+    return ok(res, { deleted: true, data: { id: deleted.id, status: deleted.status, deletedAt: deleted.deleted_at } });
   }
 
   return false;

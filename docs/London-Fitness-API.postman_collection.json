@@ -224,6 +224,15 @@
             },
             "url": "{{baseUrl}}/api/auth/logout"
           }
+        },
+        {
+          "name": "Excluir conta (soft delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/auth/account",
+            "description": "Marca a conta do usuário autenticado como excluída (status = deleted, deleted_at = now). Não apaga a linha. Revoga sessões e cancela matrícula."
+          }
         }
       ]
     },

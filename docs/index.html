@@ -279,6 +279,11 @@ const groups = [
       {
         method: "GET", path: "/api/auth/me", auth: true,
         desc: "Usuário autenticado + perfil, equipamentos e músculos de foco."
+      },
+      {
+        method: "DELETE", path: "/api/auth/account", auth: true,
+        desc: "O próprio aluno exclui a conta (soft delete). Preenche deletedAt, marca status deleted, revoga sessões e cancela matrícula/pagamentos em aberto. O registro permanece no banco; login e refresh passam a falhar.",
+        out: { success: true, deleted: true, data: { id: "uuid", status: "deleted", deletedAt: "2026-09-14T12:54:00.000Z" } }
       }
     ]
   },
