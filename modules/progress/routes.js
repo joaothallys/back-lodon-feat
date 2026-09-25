@@ -8,7 +8,7 @@ const RANGES = ["week", "month", "year", "all"];
 
 function sessionFilter(alias) {
   return `${alias}.user_id = $1
-    AND ${alias}.status = 'completed'
+    AND ${alias}.status IN ('completed', 'partial')
     AND ${alias}.deleted_at IS NULL`;
 }
 

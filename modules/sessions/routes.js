@@ -2,8 +2,28 @@ const { one, many, camel, pool } = require("../../db/pool");
 const { ok, readJson, matchPath, httpError, query } = require("../../lib/http");
 const { requireUser } = require("../../lib/auth");
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SOURCE_TYPES = new Set(["plan_day", "custom", "fast", "single"]);
+const SET_TYPES = new Set(["W", "N", "D", "S"]);
+
 function calcCalories(durationMin, volumeKg) {
   return Math.max(0, Math.round((Number(durationMin) || 0) * 5.5 + (Number(volumeKg) || 0) * 0.035));
+}
+
+function asUuid(value) {
+  if (value == null || value === "") return null;
+  const text = String(value).trim();
+  return UUID_RE.test(text) ? text : null;
+}
+
+function asSourceType(value) {
+  const type = String(value || "").trim();
+  return SOURCE_TYPES.has(type) ? type : "custom";
+}
+
+function asSetType(value) {
+  const type = String(value || "N").toUpperCase();
+  return SET_TYPES.has(type) ? type : "N";
 }
 
 async function loadSession(session) {
@@ -27,9 +47,12 @@ function totalsFromSets(exercises) {
   let setsCount = 0;
   let bestWeight = 0;
   let bestReps = 0;
+  let doneExercises = 0;
   exercises.forEach((exercise) => {
+    let anyDone = false;
     (exercise.sets || []).forEach((set) => {
       if (!set.done) return;
+      anyDone = true;
       setsCount += 1;
       if (set.type !== "W") volume += Number(set.kg) * Number(set.reps);
       if (Number(set.kg) > bestWeight) {
@@ -37,20 +60,43 @@ function totalsFromSets(exercises) {
         bestReps = Number(set.reps);
       }
     });
+    if (anyDone) doneExercises += 1;
   });
-  return { volume, setsCount, bestWeight: bestWeight || null, bestReps: bestReps || null };
+  return { volume, setsCount, doneExercises, bestWeight: bestWeight || null, bestReps: bestReps || null };
 }
 
-function asDoneOnComplete(exercises, completing) {
-  return (exercises || []).map((exercise, index) => ({
-    ...exercise,
-    position: exercise.position != null ? exercise.position : index,
-    sets: (exercise.sets || []).map((set, setIndex) => ({
-      ...set,
-      position: set.position != null ? set.position : setIndex,
-      done: completing ? set.done !== false : Boolean(set.done)
-    }))
-  }));
+function sessionFinishStatus(exercises) {
+  const working = [];
+  (exercises || []).forEach((exercise) => {
+    (exercise.sets || []).forEach((set) => {
+      if (set.type !== "W") working.push(set);
+    });
+  });
+  if (!working.length) return "completed";
+  const done = working.filter((set) => set.done);
+  if (!done.length || done.length === working.length) return "completed";
+  return "partial";
+}
+
+function normalizeExercises(exercises) {
+  return (exercises || []).map((exercise, index) => {
+    const sets = Array.isArray(exercise.sets)
+      ? exercise.sets.map((set, setIndex) => ({
+        type: asSetType(set.type),
+        kg: Number(set.kg) || 0,
+        reps: Number(set.reps) || 0,
+        done: Boolean(set.done),
+        position: set.position != null ? set.position : setIndex
+      }))
+      : [];
+    return {
+      exerciseId: exercise.exerciseId ? String(exercise.exerciseId) : "",
+      restSec: exercise.restSec != null ? exercise.restSec : 90,
+      replacedFromExerciseId: exercise.replacedFromExerciseId || null,
+      position: exercise.position != null ? exercise.position : index,
+      sets
+    };
+  }).filter((exercise) => exercise.exerciseId);
 }
 
 function templateToExercises(exercises) {
@@ -84,14 +130,7 @@ async function insertSessionExercises(client, sessionId, exercises) {
         exercise.replacedFromExerciseId || null
       ]
     )).rows[0];
-    const sets = Array.isArray(exercise.sets) && exercise.sets.length
-      ? exercise.sets
-      : Array.from({ length: Number(exercise.setsCount) || 3 }, () => ({
-        type: "N",
-        kg: Number(exercise.kg) || 0,
-        reps: Number(exercise.reps) || 10,
-        done: false
-      }));
+    const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
     for (const [setIndex, set] of sets.entries()) {
       await client.query(
         `INSERT INTO workout_sets (session_exercise_id, position, type, kg, reps, done, completed_at)
@@ -99,7 +138,7 @@ async function insertSessionExercises(client, sessionId, exercises) {
         [
           created.id,
           set.position != null ? set.position : setIndex,
-          set.type || "N",
+          asSetType(set.type),
           Number(set.kg) || 0,
           Number(set.reps) || 0,
           Boolean(set.done),
@@ -116,6 +155,7 @@ async function replaceSessionTree(client, sessionId, exercises) {
 }
 
 async function copyFromSource(userId, sourceType, sourceId) {
+  sourceId = asUuid(sourceId);
   if (sourceType === "custom" && sourceId) {
     const workout = await one(
       "SELECT * FROM custom_workouts WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL",
@@ -191,7 +231,10 @@ function lastWorkingSet(exercise) {
 }
 
 async function saveAsCustomWorkout(userId, name, exercises) {
-  const items = (exercises || []).map(lastWorkingSet).filter((item) => item.exerciseId);
+  const items = (exercises || [])
+    .filter((exercise) => (exercise.sets || []).some((set) => set.done && set.type !== "W"))
+    .map(lastWorkingSet)
+    .filter((item) => item.exerciseId);
   if (!items.length) return null;
   const client = await pool.connect();
   try {
@@ -220,13 +263,13 @@ async function saveAsCustomWorkout(userId, name, exercises) {
 }
 
 async function finishSession(user, session, body) {
-  if (session.status === "completed" && session.deleted_at == null) {
+  if ((session.status === "completed" || session.status === "partial") && session.deleted_at == null) {
     return loadSession(session);
   }
   if (session.status === "abandoned") throw httpError(409, "sessão abandonada");
 
-  if (body.exercises) {
-    const exercises = asDoneOnComplete(templateToExercises(body.exercises), true);
+  if (body.exercises !== undefined) {
+    const exercises = normalizeExercises(body.exercises);
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
@@ -238,49 +281,35 @@ async function finishSession(user, session, body) {
     } finally {
       client.release();
     }
-  } else {
-    const current = await loadSession(session);
-    if (current.exercises.length) {
-      const exercises = asDoneOnComplete(current.exercises, true);
-      const client = await pool.connect();
-      try {
-        await client.query("BEGIN");
-        await replaceSessionTree(client, session.id, exercises);
-        await client.query("COMMIT");
-      } catch (err) {
-        await client.query("ROLLBACK");
-        throw err;
-      } finally {
-        client.release();
-      }
-    }
   }
 
   const loaded = await loadSession(session);
   const stats = totalsFromSets(loaded.exercises);
   const duration = body.durationMin != null
-    ? Number(body.durationMin)
-    : Math.max(1, Math.round((Date.now() - new Date(session.started_at).getTime()) / 60000));
+    ? Math.max(0, Number(body.durationMin) || 0)
+    : Math.max(0, Math.round((Date.now() - new Date(session.started_at).getTime()) / 60000));
   const calories = body.calories != null ? Number(body.calories) : calcCalories(duration, stats.volume);
+  const status = sessionFinishStatus(loaded.exercises);
   const updated = await one(
     `UPDATE workout_sessions SET
-       status = 'completed',
+       status = $1,
        finished_at = now(),
-       duration_min = $1,
-       volume_kg = $2,
-       calories = $3,
-       exercises_count = $4,
-       sets_count = $5,
-       best_weight = $6,
-       best_reps = $7,
-       name = COALESCE($8, name)
-     WHERE id = $9
+       duration_min = $2,
+       volume_kg = $3,
+       calories = $4,
+       exercises_count = $5,
+       sets_count = $6,
+       best_weight = $7,
+       best_reps = $8,
+       name = COALESCE($9, name)
+     WHERE id = $10
      RETURNING *`,
     [
+      status,
       duration,
       stats.volume,
       calories,
-      loaded.exercises.length,
+      stats.doneExercises,
       stats.setsCount,
       stats.bestWeight,
       stats.bestReps,
@@ -298,17 +327,19 @@ async function finishSession(user, session, body) {
 }
 
 async function createCompletedSession(user, body) {
-  const sourceType = body.sourceType || "fast";
-  const copied = await copyFromSource(user.id, sourceType, body.sourceId);
+  const sourceType = asSourceType(body.sourceType);
+  const sourceId = asUuid(body.sourceId);
+  const copied = await copyFromSource(user.id, sourceType, sourceId);
   const name = body.name || (copied && copied.name) || "Treino";
-  const raw = body.exercises || (copied && copied.exercises) || [];
-  const exercises = asDoneOnComplete(templateToExercises(raw), true);
-  if (!exercises.length) throw httpError(400, "envie os exercícios do treino finalizado");
+  const exercises = normalizeExercises(
+    Array.isArray(body.exercises) ? body.exercises : ((copied && copied.exercises) || [])
+  );
 
   const stats = totalsFromSets(exercises);
-  const duration = body.durationMin != null ? Number(body.durationMin) : 1;
+  const duration = body.durationMin != null ? Math.max(0, Number(body.durationMin) || 0) : 0;
   const calories = body.calories != null ? Number(body.calories) : calcCalories(duration, stats.volume);
   const startedAt = body.startedAt || new Date(Date.now() - duration * 60000);
+  const status = sessionFinishStatus(exercises);
 
   const client = await pool.connect();
   let session;
@@ -318,18 +349,19 @@ async function createCompletedSession(user, body) {
       `INSERT INTO workout_sessions (
          user_id, source_type, source_id, name, status, started_at, finished_at,
          duration_min, volume_kg, calories, exercises_count, sets_count, best_weight, best_reps
-       ) VALUES ($1, $2, $3, $4, 'completed', $5, now(), $6, $7, $8, $9, $10, $11, $12)
+       ) VALUES ($1, $2, $3, $4, $5, $6, now(), $7, $8, $9, $10, $11, $12, $13)
        RETURNING *`,
       [
         user.id,
         sourceType,
-        body.sourceId || null,
+        sourceId,
         name,
+        status,
         startedAt,
         duration,
         stats.volume,
         calories,
-        exercises.length,
+        stats.doneExercises,
         stats.setsCount,
         stats.bestWeight,
         stats.bestReps
@@ -353,13 +385,20 @@ async function createCompletedSession(user, body) {
   return saved;
 }
 
+function historyStatuses(status) {
+  if (status === "partial") return ["partial"];
+  if (status === "in_progress" || status === "abandoned") return [status];
+  return ["completed", "partial"];
+}
+
 async function listHistory(userId, status) {
+  const statuses = historyStatuses(status);
   const rows = await many(
     `SELECT * FROM workout_sessions
-     WHERE user_id = $1 AND deleted_at IS NULL AND status = $2
+     WHERE user_id = $1 AND deleted_at IS NULL AND status = ANY($2::text[])
      ORDER BY COALESCE(finished_at, started_at) DESC
      LIMIT 50`,
-    [userId, status]
+    [userId, statuses]
   );
   const data = [];
   for (const row of rows) data.push(await loadSession(row));
@@ -400,7 +439,7 @@ async function handle(req, res, url) {
       [user.id]
     );
     if (current) return ok(res, { data: await finishSession(user, current, body) });
-    return ok(res, { data: await createCompletedSession(user, body) }, 201);
+    return ok(res, { data: await createCompletedSession(user, body) });
   }
 
   if (req.method === "POST" && matchPath(pathname, "/api/sessions")) {
@@ -412,8 +451,9 @@ async function handle(req, res, url) {
     );
     if (existing) return ok(res, { data: await loadSession(existing), resumed: true });
 
-    const sourceType = body.sourceType || "fast";
-    const copied = await copyFromSource(user.id, sourceType, body.sourceId);
+    const sourceType = asSourceType(body.sourceType);
+    const sourceId = asUuid(body.sourceId);
+    const copied = await copyFromSource(user.id, sourceType, sourceId);
     const name = body.name || (copied && copied.name) || "Treino";
     const exercises = templateToExercises(body.exercises || (copied && copied.exercises) || []);
 
@@ -424,7 +464,7 @@ async function handle(req, res, url) {
         `INSERT INTO workout_sessions (user_id, source_type, source_id, name, status, exercises_count)
          VALUES ($1, $2, $3, $4, 'in_progress', $5)
          RETURNING *`,
-        [user.id, sourceType, body.sourceId || null, name, exercises.length]
+        [user.id, sourceType, sourceId, name, exercises.length]
       )).rows[0];
       await insertSessionExercises(client, session.id, exercises);
       await client.query("COMMIT");
@@ -485,14 +525,15 @@ async function handle(req, res, url) {
     );
     if (!session) throw httpError(404, "sessão não encontrada");
     if (session.status !== "in_progress") throw httpError(409, "sessão já encerrada");
-    if (body.exercises) {
+    if (body.exercises !== undefined) {
+      const exercises = normalizeExercises(body.exercises);
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
-        await replaceSessionTree(client, session.id, templateToExercises(body.exercises));
+        await replaceSessionTree(client, session.id, exercises);
         await client.query(
           "UPDATE workout_sessions SET exercises_count = $1 WHERE id = $2",
-          [body.exercises.length, session.id]
+          [exercises.length, session.id]
         );
         await client.query("COMMIT");
       } catch (err) {

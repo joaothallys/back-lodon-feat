@@ -128,6 +128,7 @@
         </p>
         <div class="pills">
           <span class="pill">JWT + refresh</span>
+          <span class="pill">Google / Apple Sign-In</span>
           <span class="pill">MASTER_KEY nas rotas privadas</span>
           <span class="pill">PostgreSQL</span>
           <span class="pill">CRUD de fichas</span>
@@ -175,7 +176,7 @@ Content-Type: application/json</pre>
         <div class="steps">
           <div><strong>1. Cadastrar / editar / excluir ficha</strong> — <code>POST / PUT / DELETE /api/workouts</code>. Soft delete em exclusão.</div>
           <div><strong>2. Começar (opcional)</strong> — <code>POST /api/sessions</code> copia a ficha ou um dia do plano. Se o app fechar, <code>GET /api/sessions/current</code> retoma.</div>
-          <div><strong>3. Finalizar = salvar</strong> — <code>POST /api/sessions/complete</code>. Grava séries, volume, kcal e PRs. Sem sessão aberta, cria o registro já como <code>completed</code>.</div>
+          <div><strong>3. Finalizar = salvar</strong> — <code>POST /api/sessions/complete</code>. Aceita treino parcial (exercício pulado, série undone, array vazio). Volume/kcal só com done=true. Status completed ou partial.</div>
           <div><strong>4. Ver histórico</strong> — <code>GET /api/history</code> lista; <code>GET /api/history/:id</code> mostra série a série.</div>
         </div>
       </section>
@@ -253,11 +254,11 @@ const groups = [
   {
     id: "auth",
     title: "Autenticação",
-    lead: "Registro, login, refresh e sessão. No cadastro já nascem perfil e uma matrícula padrão com o primeiro plano/unidade ativos.",
+    lead: "Registro, login (e-mail, Google e Apple), refresh e sessão. No cadastro já nascem perfil e uma matrícula padrão com o primeiro plano/unidade ativos.",
     routes: [
       {
         method: "POST", path: "/api/auth/register", auth: false,
-        desc: "Cria usuário, perfil e matrícula inicial. Senha com no mínimo 6 caracteres, persistida como bcrypt.",
+        desc: "Cria usuário, perfil e matrícula inicial. Senha com no mínimo 6 caracteres, persistida como bcrypt. Se o e-mail já existir (senha, Google ou Apple), responde 409 e não cria outra conta.",
         body: { email: "ana@london.com", password: "senha123", name: "Ana Souza", phone: "11999999999", device: "ios" },
         out: { success: true, accessToken: "jwt", refreshToken: "hex", tokenType: "Bearer", expiresIn: 900, data: { id: "uuid", email: "ana@london.com", profile: { name: "Ana Souza" } } }
       },
@@ -265,6 +266,17 @@ const groups = [
         method: "POST", path: "/api/auth/login", auth: false,
         desc: "Login com e-mail + senha. Atualiza lastLoginAt e devolve tokens. O admin mestre usa xavier.y@example.org + MASTER_PASSWORD do .env.",
         body: { email: "ana@london.com", password: "senha123", device: "ios" }
+      },
+      {
+        method: "POST", path: "/api/auth/google", auth: false,
+        desc: "Login/cadastro com Google. Prefira idToken (JWT validado nas chaves do Google + GOOGLE_CLIENT_IDS). Também aceita accessToken/google_token (userinfo). E-mail e sub vêm do token. Se o e-mail já existir, NÃO cria outra conta: vincula, devolve tokens, created=false e message=\"Já existe uma conta com este e-mail\". Primeira vez: 201 created=true.",
+        body: { idToken: "eyJhbGciOiJSUzI1NiIs...", accessToken: "ya29.a0...", name: "Ana Souza", device: "ios" },
+        out: { success: true, created: true, message: "Conta criada", accessToken: "jwt", refreshToken: "hex", tokenType: "Bearer", expiresIn: 900, data: { id: "uuid", email: "ana@gmail.com", googleLinked: true } }
+      },
+      {
+        method: "POST", path: "/api/auth/apple", auth: false,
+        desc: "Login/cadastro com Apple. identityToken (JWT) é validado nas chaves da Apple + APPLE_CLIENT_IDS. O sub da Apple é a chave estável; e-mail do token prevalece. Se o e-mail já existir, não cria de novo (created=false). nonce é conferido quando enviado. name só vem no 1º login do iOS.",
+        body: { identityToken: "eyJhbGciOiJSUzI1NiIs...", email: "ana@privaterelay.appleid.com", name: "Ana Souza", nonce: "abc123", device: "ios" }
       },
       {
         method: "POST", path: "/api/auth/refresh", auth: false,
@@ -389,12 +401,12 @@ const groups = [
     routes: [
       {
         method: "GET", path: "/api/history", auth: true,
-        desc: "Treinos salvos (status completed). Alias de GET /api/sessions?status=completed.",
+        desc: "Treinos salvos (status completed e partial). Alias de GET /api/sessions.",
         out: { success: true, data: [{ id: "uuid", name: "Push A", status: "completed", durationMin: 54, volumeKg: 1200, calories: 339, setsCount: 8 }] }
       },
       { method: "GET", path: "/api/history/:id", auth: true, desc: "Detalhe de um treino concluído, série a série." },
       { method: "GET", path: "/api/sessions/current", auth: true, desc: "Sessão in_progress, se o aluno fechou o app no meio." },
-      { method: "GET", path: "/api/sessions", auth: true, desc: "Lista por status. Query: completed | abandoned | in_progress (padrão completed)." },
+      { method: "GET", path: "/api/sessions", auth: true, desc: "Lista por status. Query: completed | partial | abandoned | in_progress (padrão: completed + partial)." },
       {
         method: "POST", path: "/api/sessions", auth: true,
         desc: "Inicia sessão. Se já houver uma in_progress, ela é retomada (resumed: true). Copia ficha (sourceType=custom) ou dia do plano (plan_day).",
@@ -403,18 +415,18 @@ const groups = [
       { method: "GET", path: "/api/sessions/:id", auth: true, desc: "Detalhe com exercícios e sets (W/N/D/S)." },
       {
         method: "PUT", path: "/api/sessions/:id", auth: true,
-        desc: "Atualiza a sessão em andamento (kg, reps, done, troca de exercício).",
+        desc: "Atualiza a sessão em andamento. Aceita treino parcial: exercícios pulados, séries done=false e array vazio. Não exige o plano completo.",
         body: { exercises: [{ exerciseId: "rosca-direta-barra-reta", restSec: 90, replacedFromExerciseId: null, sets: [{ type: "W", kg: 10, reps: 12, done: true }, { type: "N", kg: 20, reps: 10, done: true }] }] }
       },
       {
         method: "POST", path: "/api/sessions/complete", auth: true,
-        desc: "Salva o treino finalizado. Com sessão aberta, conclui ela; senão cria já completed. Séries sem done são marcadas como feitas. saveAsWorkout: true também cria uma ficha em /workouts.",
-        body: { name: "Push A", sourceType: "fast", durationMin: 54, muscles: ["peito", "triceps"], saveAsWorkout: false, exercises: [{ exerciseId: "rosca-direta-barra-reta", restSec: 90, sets: [{ type: "N", kg: 20, reps: 10 }] }] },
-        out: { success: true, data: { id: "uuid", status: "completed", durationMin: 54, volumeKg: 200, calories: 304, exercises: [{ exerciseId: "rosca-direta-barra-reta", sets: [{ type: "N", kg: 20, reps: 10, done: true }] }] } }
+        desc: "Salva o treino, inclusive parcial. exercises:[] e séries done=false são válidos. Volume/kcal só com done=true. sourceId opcional (não-UUID vira null). Se faltou série/exercício e alguma série foi feita → status partial; senão completed. Não exige o plano inteiro.",
+        body: { name: "Quinta-feira Peito", sourceType: "custom", sourceId: null, sessionId: null, durationMin: 42, muscles: ["peito", "triceps"], saveAsWorkout: false, exercises: [{ exerciseId: "supino-reto-barra", restSec: 90, sets: [{ type: "W", kg: 20, reps: 12, done: true }, { type: "N", kg: 40, reps: 8, done: false }] }] },
+        out: { success: true, data: { id: "uuid", status: "partial", name: "Quinta-feira Peito", durationMin: 42, volumeKg: 0, calories: 231, setsCount: 1, exercises: [{ exerciseId: "supino-reto-barra", sets: [{ type: "W", kg: 20, reps: 12, done: true }, { type: "N", kg: 40, reps: 8, done: false }] }] } }
       },
       {
         method: "POST", path: "/api/sessions/:id/complete", auth: true,
-        desc: "Conclui a sessão pelo id, marca séries como feitas, recalcula volume/kcal e persiste. Idempotente se já completed.",
+        desc: "Conclui a sessão pelo id sem forçar séries undone como feitas. Idempotente se já completed/partial.",
         body: { durationMin: 54, muscles: ["peito", "triceps"], saveAsWorkout: false }
       },
       { method: "POST", path: "/api/sessions/:id/abandon", auth: true, desc: "Marca abandoned + soft delete. Não entra no histórico." }
@@ -510,7 +522,7 @@ const enums = [
   ["payment.method", "pix | card | boleto | cash"],
   ["set.type", "W | N | D | S"],
   ["session.sourceType", "plan_day | custom | fast | single"],
-  ["session.status", "in_progress | completed | abandoned"],
+  ["session.status", "in_progress | completed | partial | abandoned"],
   ["generate.gender", "homem | mulher"],
   ["generate.goal", "hipertrofia | forca | emagrecimento | definicao"],
   ["generate.equipment", "halteres | barra | polia | maquina | banco | elastico | kettlebell | peso-corporal"]
@@ -573,6 +585,7 @@ content.innerHTML = groups.map((g) => `
       <p><strong>Plano ativo:</strong> só um is_active = true por usuário.</p>
       <p><strong>Sessão aberta:</strong> só uma in_progress por usuário. Finalizar libera essa vaga.</p>
       <p><strong>Admin mestre:</strong> e-mail no .env (MASTER_EMAIL) ou Authorization: Bearer MASTER_KEY em qualquer rota privada.</p>
+      <p><strong>Social login:</strong> <code>GOOGLE_CLIENT_IDS</code> (Android/iOS/Web) e <code>APPLE_CLIENT_IDS</code> (Bundle ID / Services ID). Sem isso, /api/auth/google e /api/auth/apple respondem 503.</p>
       <p><strong>Gráficos:</strong> sem tabela de stats. GET /api/progress agrega sessões. Volume = kg × reps, type ≠ W. exerciseId = catálogo London.</p>
     </div>
   </section>

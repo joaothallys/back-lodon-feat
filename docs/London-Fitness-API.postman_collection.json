@@ -138,6 +138,62 @@
           }
         },
         {
+          "name": "Login Google",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "if (json.refreshToken) pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "if (json.data && json.data.id) pm.collectionVariables.set('userId', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idToken\": \"eyJhbGciOiJSUzI1NiIs...\",\n  \"accessToken\": \"ya29.a0...\",\n  \"name\": \"Ana Souza\",\n  \"device\": \"postman\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/google",
+            "description": "Valida idToken (preferido) ou accessToken/google_token no Google e cria/vincula a conta. Requer GOOGLE_CLIENT_IDS no .env."
+          }
+        },
+        {
+          "name": "Login Apple",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "if (json.refreshToken) pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "if (json.data && json.data.id) pm.collectionVariables.set('userId', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identityToken\": \"eyJhbGciOiJSUzI1NiIs...\",\n  \"email\": \"ana@privaterelay.appleid.com\",\n  \"name\": \"Ana Souza\",\n  \"device\": \"ios\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/apple",
+            "description": "Valida o identityToken (JWT) nas chaves da Apple e cria/vincula a conta pelo sub. Requer APPLE_CLIENT_IDS no .env. nonce é opcional."
+          }
+        },
+        {
           "name": "Login mestre",
           "event": [
             {

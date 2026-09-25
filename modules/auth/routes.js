@@ -1,5 +1,5 @@
 const { one, pool } = require("../../db/pool");
-const { ok, fail, readJson, required, matchPath, httpError } = require("../../lib/http");
+const { ok, readJson, required, matchPath, httpError } = require("../../lib/http");
 const {
   hashPassword,
   verifyPassword,
@@ -9,47 +9,17 @@ const {
   rotateRefresh,
   revokeRefresh,
   deleteOwnAccount,
-  newMemberCode
+  createDefaultMembership,
+  loginWithSocial,
+  emailTakenMessage
 } = require("../../lib/auth");
+const { verifyGoogleToken, verifyAppleIdentityToken, normalizeEmail } = require("../../lib/oauth");
 
-function intervalDays(interval) {
-  if (interval === "yearly") return 365;
-  if (interval === "quarterly") return 90;
-  return 30;
-}
-
-async function createDefaultMembership(client, userId) {
-  const plan = (await client.query(
-    "SELECT * FROM membership_plans WHERE active = true ORDER BY amount ASC LIMIT 1"
-  )).rows[0];
-  const unit = (await client.query(
-    "SELECT * FROM gym_units WHERE active = true ORDER BY name ASC LIMIT 1"
-  )).rows[0];
-  if (!plan) return null;
-
-  let memberCode = newMemberCode();
-  for (let i = 0; i < 5; i += 1) {
-    const exists = (await client.query("SELECT 1 FROM memberships WHERE member_code = $1", [memberCode])).rowCount;
-    if (!exists) break;
-    memberCode = newMemberCode();
-  }
-
-  const days = intervalDays(plan.interval);
-  const started = new Date();
-  const next = new Date(started.getTime() + days * 86400000);
-  const membership = (await client.query(
-    `INSERT INTO memberships (user_id, plan_id, unit_id, member_code, status, started_at, expires_at, next_payment_at)
-     VALUES ($1, $2, $3, $4, 'ativa', CURRENT_DATE, $5, $5)
-     RETURNING *`,
-    [userId, plan.id, unit ? unit.id : null, memberCode, next.toISOString().slice(0, 10)]
-  )).rows[0];
-
-  await client.query(
-    `INSERT INTO payments (membership_id, user_id, amount, due_date, status)
-     VALUES ($1, $2, $3, $4, 'em_aberto')`,
-    [membership.id, userId, plan.amount, membership.next_payment_at]
-  );
-  return membership;
+function appleNameFromBody(body) {
+  if (body.name) return String(body.name).trim();
+  const full = body.fullName || body.full_name;
+  if (!full || typeof full !== "object") return "";
+  return [full.givenName, full.familyName].filter(Boolean).join(" ").trim();
 }
 
 async function handle(req, res, url) {
@@ -61,8 +31,8 @@ async function handle(req, res, url) {
     const email = String(body.email).trim().toLowerCase();
     const password = String(body.password);
     if (password.length < 6) throw httpError(400, "senha deve ter ao menos 6 caracteres");
-    const exists = await one("SELECT id FROM users WHERE email = $1", [email]);
-    if (exists) throw httpError(409, "e-mail já cadastrado");
+    const exists = await one("SELECT * FROM users WHERE email = $1", [email]);
+    if (exists) throw httpError(409, emailTakenMessage(exists));
 
     const passwordHash = await hashPassword(password);
     const client = await pool.connect();
@@ -106,11 +76,55 @@ async function handle(req, res, url) {
     const email = String(body.email).trim().toLowerCase();
     const user = await one("SELECT * FROM users WHERE email = $1", [email]);
     if (!user || user.status !== "active") throw httpError(401, "credenciais inválidas");
+    if (!user.password_hash) throw httpError(401, "esta conta usa login social");
     const valid = await verifyPassword(String(body.password), user.password_hash);
     if (!valid) throw httpError(401, "credenciais inválidas");
     await one("UPDATE users SET last_login_at = now(), updated_at = now() WHERE id = $1 RETURNING id", [user.id]);
     const tokens = await createSession(user, body.device);
     return ok(res, { data: await publicUser(user), ...tokens });
+  }
+
+  if (req.method === "POST" && matchPath(pathname, "/api/auth/google")) {
+    const body = await readJson(req);
+    const idToken = body.idToken || body.id_token || "";
+    const accessToken = body.accessToken || body.access_token || body.google_token || "";
+    if (!idToken && !accessToken) throw httpError(400, "idToken ou accessToken é obrigatório");
+    const identity = await verifyGoogleToken({ idToken, accessToken });
+    const result = await loginWithSocial({
+      provider: "google",
+      sub: identity.sub,
+      email: identity.email,
+      emailVerified: identity.emailVerified,
+      name: identity.name || body.name || null,
+      device: body.device
+    });
+    return ok(res, {
+      created: result.created,
+      message: result.message,
+      data: await publicUser(result.user),
+      ...result.tokens
+    }, result.created ? 201 : 200);
+  }
+
+  if (req.method === "POST" && matchPath(pathname, "/api/auth/apple")) {
+    const body = await readJson(req);
+    const identityToken = body.identityToken || body.identity_token || body.idToken || "";
+    if (!identityToken) throw httpError(400, "identityToken é obrigatório");
+    const identity = await verifyAppleIdentityToken(identityToken, body.nonce);
+    const result = await loginWithSocial({
+      provider: "apple",
+      sub: identity.sub,
+      email: identity.email || normalizeEmail(body.email),
+      emailVerified: identity.emailVerified || Boolean(identity.email),
+      name: identity.name || appleNameFromBody(body) || null,
+      device: body.device
+    });
+    return ok(res, {
+      created: result.created,
+      message: result.message,
+      data: await publicUser(result.user),
+      ...result.tokens
+    }, result.created ? 201 : 200);
   }
 
   if (req.method === "POST" && matchPath(pathname, "/api/auth/refresh")) {
