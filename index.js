@@ -23,7 +23,8 @@ const modules = [
   require("./modules/sessions/routes"),
   require("./modules/library/routes"),
   require("./modules/exercises/routes"),
-  require("./modules/media/routes")
+  require("./modules/media/routes"),
+  require("./modules/shares/routes")
 ];
 
 const PORT = Number(process.env.PORT) || 3000;
