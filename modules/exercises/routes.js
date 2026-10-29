@@ -1,6 +1,7 @@
 const ExerciseDBService = require("./exercisedb-service");
 const repo = require("./repo");
-const { json, readBody, query } = require("../../lib/http");
+const { json, readBody, query, httpError } = require("../../lib/http");
+const { requireUser } = require("../../lib/auth");
 const { loadExerciseMedia } = require("../media/exercise-media");
 
 const listCache = { key: "", at: 0, payload: null };
@@ -18,6 +19,12 @@ const syncJob = {
   error: null,
   resumeCursor: null
 };
+
+async function requireAdmin(req) {
+  const user = await requireUser(req);
+  if (user.role !== "admin") throw httpError(403, "acesso restrito");
+  return user;
+}
 
 function clearListCache() {
   listCache.key = "";
@@ -182,10 +189,12 @@ async function handle(req, res, url) {
   }
 
   if (req.method === "GET" && pathname === "/api/admin/exercises/sync/status") {
+    await requireAdmin(req);
     return json(res, 200, { success: true, ...syncSnapshot() });
   }
 
   if (req.method === "POST" && pathname === "/api/admin/exercises/sync") {
+    await requireAdmin(req);
     await readBody(req);
     if (!claimSync()) {
       return json(res, 409, { success: false, error: "sync already running", ...syncSnapshot() });
