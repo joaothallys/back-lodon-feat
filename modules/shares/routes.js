@@ -65,12 +65,28 @@ function normalizePayload(body) {
     }))
   })).filter((it) => it.id && it.name);
   if (!items.length) throw httpError(400, "treino sem exercícios");
-  return {
+  const payload = {
     kind: "workout",
     name: text(body.name, 80) || "Treino",
     author: text(body.author, 40),
     items
   };
+  // Treino concluído: leva duração, volume e data reais para a página mostrar.
+  const finishedAt = isoDate(body.finishedAt);
+  if (finishedAt) {
+    payload.kind = "session";
+    payload.finishedAt = finishedAt;
+    payload.durationMin = Math.round(num(body.durationMin, 600));
+    payload.volumeKg = Math.round(num(body.volumeKg, 1000000));
+  }
+  return payload;
+}
+
+function isoDate(value) {
+  if (!value) return "";
+  const t = new Date(value).getTime();
+  if (!Number.isFinite(t) || t > Date.now() + 86400000) return "";
+  return new Date(t).toISOString();
 }
 
 async function handle(req, res, url) {

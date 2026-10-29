@@ -6,6 +6,9 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const SOURCE_TYPES = new Set(["plan_day", "custom", "fast", "single"]);
 const SET_TYPES = new Set(["W", "N", "D", "S"]);
 
+// Treino esquecido aberto por dias não pode virar 17 mil minutos.
+const MAX_DURATION_MIN = 600;
+
 function calcCalories(durationMin, volumeKg) {
   return Math.max(0, Math.round((Number(durationMin) || 0) * 5.5 + (Number(volumeKg) || 0) * 0.035));
 }
@@ -285,9 +288,9 @@ async function finishSession(user, session, body) {
 
   const loaded = await loadSession(session);
   const stats = totalsFromSets(loaded.exercises);
-  const duration = body.durationMin != null
+  const duration = Math.min(MAX_DURATION_MIN, body.durationMin != null
     ? Math.max(0, Number(body.durationMin) || 0)
-    : Math.max(0, Math.round((Date.now() - new Date(session.started_at).getTime()) / 60000));
+    : Math.max(0, Math.round((Date.now() - new Date(session.started_at).getTime()) / 60000)));
   const calories = body.calories != null ? Number(body.calories) : calcCalories(duration, stats.volume);
   const status = sessionFinishStatus(loaded.exercises);
   const updated = await one(
@@ -336,7 +339,7 @@ async function createCompletedSession(user, body) {
   );
 
   const stats = totalsFromSets(exercises);
-  const duration = body.durationMin != null ? Math.max(0, Number(body.durationMin) || 0) : 0;
+  const duration = body.durationMin != null ? Math.min(MAX_DURATION_MIN, Math.max(0, Number(body.durationMin) || 0)) : 0;
   const calories = body.calories != null ? Number(body.calories) : calcCalories(duration, stats.volume);
   const startedAt = body.startedAt || new Date(Date.now() - duration * 60000);
   const status = sessionFinishStatus(exercises);
