@@ -2,9 +2,11 @@ const { one, many, camel, pool } = require("../../db/pool");
 const { ok, readJson, matchPath, required, httpError } = require("../../lib/http");
 const { requireUser } = require("../../lib/auth");
 
+const MAX_EXERCISES = 60;
+
 function normalizeExercises(list) {
   if (!Array.isArray(list)) return [];
-  return list.map((item, index) => ({
+  return list.filter(Boolean).slice(0, MAX_EXERCISES).map((item, index) => ({
     position: item.position != null ? Number(item.position) : index,
     exerciseId: item.exerciseId,
     sets: Number(item.sets) || 0,

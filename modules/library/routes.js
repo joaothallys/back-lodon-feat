@@ -2,6 +2,8 @@ const { one, many, camel } = require("../../db/pool");
 const { ok, readJson, matchPath, required, httpError } = require("../../lib/http");
 const { requireUser } = require("../../lib/auth");
 
+const MAX_ANALYTICS_PAYLOAD = 4000;
+
 async function handle(req, res, url) {
   const pathname = url.pathname;
 
@@ -110,11 +112,15 @@ async function handle(req, res, url) {
     const user = await requireUser(req);
     const body = await readJson(req);
     required(body, ["event"]);
+    const payload = body.payload ? JSON.stringify(body.payload) : null;
+    if (String(body.event).length > 80 || (payload && payload.length > MAX_ANALYTICS_PAYLOAD)) {
+      throw httpError(400, "evento muito grande");
+    }
     const row = await one(
       `INSERT INTO analytics_events (user_id, event, exercise_id, payload)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [user.id, body.event, body.exerciseId || null, body.payload ? JSON.stringify(body.payload) : null]
+      [user.id, String(body.event), body.exerciseId || null, payload]
     );
     return ok(res, { data: camel(row) }, 201);
   }
