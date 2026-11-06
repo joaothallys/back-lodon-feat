@@ -1,7 +1,15 @@
 const { json, query, fail } = require("../../lib/http");
+const limiter = require("../../lib/rate-limit");
 const repo = require("../exercises/repo");
 const tenor = require("./tenor");
 const { loadExerciseMedia, loadMuscles, loadBodyparts, loadEquipments, loadExerciseTypes } = require("./exercise-media");
+
+const MAX_QUERY = 120;
+
+// Só a busca que sai do cache gasta a cota paga do provedor.
+function chargeUpstream(req) {
+  limiter.consume("mediaUpstream", "media:" + limiter.clientIp(req));
+}
 
 function keyOf(name) {
   return String(name || "").trim().toLowerCase();
@@ -34,8 +42,8 @@ async function handle(req, res, url) {
   }
 
   if (req.method === "GET" && url.pathname === "/api/media/exercise") {
-    const name = (q.q || q.name || "").trim();
-    const exerciseId = (q.exerciseId || q.id || "").trim();
+    const name = (q.q || q.name || "").trim().slice(0, MAX_QUERY);
+    const exerciseId = (q.exerciseId || q.id || "").trim().slice(0, MAX_QUERY);
     if (!name && !exerciseId) {
       fail(res, 400, "missing q");
       return true;
@@ -44,7 +52,8 @@ async function handle(req, res, url) {
       const media = await loadExerciseMedia({
         q: name,
         gender: q.gender,
-        exerciseId: exerciseId || null
+        exerciseId: exerciseId || null,
+        beforeUpstream: () => chargeUpstream(req)
       });
       if (!media) {
         json(res, 200, { success: false, error: "not found", gifUrl: null, imageUrl: null, videoUrl: null });
@@ -59,7 +68,7 @@ async function handle(req, res, url) {
 
   if (req.method !== "GET" || url.pathname !== "/api/media/fallback") return false;
 
-  const name = (q.q || q.name || "").trim();
+  const name = (q.q || q.name || "").trim().slice(0, MAX_QUERY);
   if (!name) {
     json(res, 400, { success: false, error: "missing q" });
     return true;
@@ -72,6 +81,7 @@ async function handle(req, res, url) {
     return true;
   }
 
+  chargeUpstream(req);
   const gifUrl = await tenor.searchGif(name);
   if (!gifUrl) {
     json(res, 200, {

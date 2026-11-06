@@ -3,13 +3,28 @@ const { log } = require("../lib/logger");
 
 types.setTypeParser(1700, (value) => (value == null ? null : Number(value)));
 
-const ssl = process.env.DATABASE_SSL === "false"
-  ? false
-  : { rejectUnauthorized: false };
+function caFromEnv(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("-----BEGIN")) return raw.replace(/\\n/g, "\n");
+  return Buffer.from(raw, "base64").toString("utf8");
+}
+
+function sslConfig(env = process.env) {
+  if (env.DATABASE_SSL === "false") return false;
+  const ca = caFromEnv(env.DATABASE_CA_CERT);
+  if (!ca) {
+    log.warn("postgres.tls_unverified", { hint: "defina DATABASE_CA_CERT" });
+    return { rejectUnauthorized: false };
+  }
+  // O Postgres do Railway usa um CA próprio e um certificado emitido para
+  // "localhost". Validamos a cadeia contra esse CA; o nome nunca bateria com o proxy.
+  return { ca, rejectUnauthorized: true, checkServerIdentity: () => undefined };
+}
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl,
+  ssl: sslConfig(),
   max: 10
 });
 
@@ -59,4 +74,4 @@ function camel(row) {
   return out;
 }
 
-module.exports = { pool, one, many, camel };
+module.exports = { pool, one, many, camel, sslConfig };

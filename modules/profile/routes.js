@@ -2,6 +2,8 @@ const { one, pool } = require("../../db/pool");
 const { ok, readJson, matchPath, required } = require("../../lib/http");
 const { requireUser, publicUser, loadProfileExtras } = require("../../lib/auth");
 
+const MAX_LIST = 100;
+
 const PROFILE_FIELDS = [
   ["name", "name"],
   ["gender", "gender"],
@@ -19,7 +21,7 @@ const PROFILE_FIELDS = [
 
 async function replaceList(client, table, column, userId, values) {
   await client.query("DELETE FROM " + table + " WHERE user_id = $1", [userId]);
-  const items = Array.isArray(values) ? values.filter(Boolean) : [];
+  const items = Array.isArray(values) ? values.filter(Boolean).slice(0, MAX_LIST) : [];
   for (const value of items) {
     await client.query(
       "INSERT INTO " + table + " (user_id, " + column + ") VALUES ($1, $2) ON CONFLICT DO NOTHING",

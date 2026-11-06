@@ -2,10 +2,13 @@ const crypto = require("node:crypto");
 const { one, pool } = require("../../db/pool");
 const { ok, readJson, matchPath, httpError } = require("../../lib/http");
 const { requireUser } = require("../../lib/auth");
+const { log } = require("../../lib/logger");
+const limiter = require("../../lib/rate-limit");
 
 const ALPHABET = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const MAX_ITEMS = 40;
 const MAX_SETS = 20;
+const MEDIA_HOSTS = ["exercisedb.dev", "ascendapi.com", "tenor.com"];
 
 let tableReady = null;
 
@@ -44,21 +47,35 @@ function num(value, max) {
   return Math.min(n, max);
 }
 
-function httpsUrl(value) {
+// A página pública exibe esta imagem; link de outro domínio deixaria qualquer
+// pessoa publicar conteúdo próprio ou rastrear quem abre o treino.
+function mediaUrl(value) {
   const s = text(value, 500);
-  return /^https:\/\//i.test(s) ? s : "";
+  if (!s) return "";
+  let host = "";
+  try {
+    const parsed = new URL(s);
+    if (parsed.protocol !== "https:") return "";
+    host = parsed.hostname.toLowerCase();
+  } catch (_) {
+    return "";
+  }
+  if (MEDIA_HOSTS.some((item) => host === item || host.endsWith("." + item))) return s;
+  log.warn("shares.media_host_rejected", { host });
+  return "";
 }
 
 function normalizePayload(body) {
-  const items = (Array.isArray(body.items) ? body.items : []).slice(0, MAX_ITEMS).map((it) => ({
+  const raw = (Array.isArray(body.items) ? body.items : []).filter((it) => it && typeof it === "object");
+  const items = raw.slice(0, MAX_ITEMS).map((it) => ({
     id: text(it.id, 80),
     sourceId: text(it.sourceId, 40),
     name: text(it.name, 120),
     muscle: text(it.muscle, 40),
     equipment: text(it.equipment, 60),
-    gifUrl: httpsUrl(it.gifUrl),
+    gifUrl: mediaUrl(it.gifUrl),
     rest: num(it.rest, 900),
-    sets: (Array.isArray(it.sets) ? it.sets : []).slice(0, MAX_SETS).map((s) => ({
+    sets: (Array.isArray(it.sets) ? it.sets : []).filter(Boolean).slice(0, MAX_SETS).map((s) => ({
       type: text(s.type, 2) || "N",
       kg: num(s.kg, 1000),
       reps: num(s.reps, 200)
@@ -94,6 +111,7 @@ async function handle(req, res, url) {
 
   if (req.method === "POST" && matchPath(pathname, "/api/shares")) {
     const user = await requireUser(req);
+    limiter.consume("shareCreate", "share:" + user.id);
     const payload = normalizePayload(await readJson(req));
     await ensureTable();
     for (let attempt = 0; attempt < 5; attempt += 1) {
@@ -118,7 +136,8 @@ async function handle(req, res, url) {
       [text(params.id, 20)]
     );
     if (!row) throw httpError(404, "treino compartilhado não encontrado");
-    return ok(res, { data: { id: row.id, ...row.payload, views: row.views, createdAt: row.created_at } });
+    const items = (row.payload.items || []).map((it) => ({ ...it, gifUrl: mediaUrl(it.gifUrl) }));
+    return ok(res, { data: { id: row.id, ...row.payload, items, views: row.views, createdAt: row.created_at } });
   }
 
   return false;

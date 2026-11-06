@@ -3,6 +3,7 @@ const { ok, readJson, required, matchPath, httpError } = require("../../lib/http
 const {
   hashPassword,
   verifyPassword,
+  burnPasswordCheck,
   createSession,
   requireUser,
   publicUser,
@@ -13,7 +14,35 @@ const {
   loginWithSocial,
   emailTakenMessage
 } = require("../../lib/auth");
-const { verifyGoogleToken, verifyAppleIdentityToken, normalizeEmail } = require("../../lib/oauth");
+const { verifyGoogleToken, verifyAppleIdentityToken } = require("../../lib/oauth");
+const limiter = require("../../lib/rate-limit");
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const NAME_MAX = 80;
+const PHONE_MAX = 20;
+const PASSWORD_MAX = 200;
+
+function registerFields(body) {
+  const email = String(body.email).trim().toLowerCase();
+  const name = String(body.name).trim();
+  const phone = body.phone == null || body.phone === "" ? null : String(body.phone).trim();
+  const password = String(body.password);
+  if (email.length > 254 || !EMAIL_RE.test(email)) throw httpError(400, "e-mail inválido");
+  if (!name || name.length > NAME_MAX) throw httpError(400, "nome inválido");
+  if (phone && phone.length > PHONE_MAX) throw httpError(400, "telefone inválido");
+  if (password.length < 6) throw httpError(400, "senha deve ter ao menos 6 caracteres");
+  if (password.length > PASSWORD_MAX) throw httpError(400, "senha muito longa");
+  return { email, name, phone, password };
+}
+
+function loginKeys(req, email) {
+  const ip = limiter.clientIp(req);
+  return [
+    ["loginIpEmail", "login-ip-email:" + ip + ":" + email],
+    ["loginEmail", "login-email:" + email],
+    ["loginIp", "login-ip:" + ip]
+  ];
+}
 
 function appleNameFromBody(body) {
   if (body.name) return String(body.name).trim();
@@ -26,11 +55,10 @@ async function handle(req, res, url) {
   const pathname = url.pathname;
 
   if (req.method === "POST" && matchPath(pathname, "/api/auth/register")) {
+    limiter.consume("register", "register:" + limiter.clientIp(req));
     const body = await readJson(req);
     required(body, ["email", "password", "name"]);
-    const email = String(body.email).trim().toLowerCase();
-    const password = String(body.password);
-    if (password.length < 6) throw httpError(400, "senha deve ter ao menos 6 caracteres");
+    const { email, name, phone, password } = registerFields(body);
     const exists = await one("SELECT * FROM users WHERE email = $1", [email]);
     if (exists) throw httpError(409, emailTakenMessage(exists));
 
@@ -42,14 +70,14 @@ async function handle(req, res, url) {
         `INSERT INTO users (email, phone, password_hash)
          VALUES ($1, $2, $3)
          RETURNING *`,
-        [email, body.phone || null, passwordHash]
+        [email, phone, passwordHash]
       )).rows[0];
       await client.query(
         `INSERT INTO user_profiles (user_id, name, gender, goal, level, environment, training_days, session_duration_min)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
         [
           user.id,
-          String(body.name).trim(),
+          name,
           body.gender || null,
           body.goal || "hipertrofia",
           body.level || "iniciante",
@@ -73,18 +101,29 @@ async function handle(req, res, url) {
   if (req.method === "POST" && matchPath(pathname, "/api/auth/login")) {
     const body = await readJson(req);
     required(body, ["email", "password"]);
-    const email = String(body.email).trim().toLowerCase();
+    const email = String(body.email).trim().toLowerCase().slice(0, 254);
+    const keys = loginKeys(req, email);
+    keys.forEach(([name, key]) => limiter.assertAllowed(name, key));
+    const fail = (message) => {
+      keys.forEach(([name, key]) => limiter.record(name, key));
+      return httpError(401, message);
+    };
     const user = await one("SELECT * FROM users WHERE email = $1", [email]);
-    if (!user || user.status !== "active") throw httpError(401, "credenciais inválidas");
-    if (!user.password_hash) throw httpError(401, "esta conta usa login social");
+    if (!user || user.status !== "active") {
+      await burnPasswordCheck(body.password);
+      throw fail("credenciais inválidas");
+    }
+    if (!user.password_hash) throw fail("esta conta usa login social");
     const valid = await verifyPassword(String(body.password), user.password_hash);
-    if (!valid) throw httpError(401, "credenciais inválidas");
+    if (!valid) throw fail("credenciais inválidas");
+    limiter.clear(keys[0][1]);
     await one("UPDATE users SET last_login_at = now(), updated_at = now() WHERE id = $1 RETURNING id", [user.id]);
     const tokens = await createSession(user, body.device);
     return ok(res, { data: await publicUser(user), ...tokens });
   }
 
   if (req.method === "POST" && matchPath(pathname, "/api/auth/google")) {
+    limiter.consume("social", "social:" + limiter.clientIp(req));
     const body = await readJson(req);
     const idToken = body.idToken || body.id_token || "";
     const accessToken = body.accessToken || body.access_token || body.google_token || "";
@@ -107,6 +146,7 @@ async function handle(req, res, url) {
   }
 
   if (req.method === "POST" && matchPath(pathname, "/api/auth/apple")) {
+    limiter.consume("social", "social:" + limiter.clientIp(req));
     const body = await readJson(req);
     const identityToken = body.identityToken || body.identity_token || body.idToken || "";
     if (!identityToken) throw httpError(400, "identityToken é obrigatório");
@@ -114,7 +154,7 @@ async function handle(req, res, url) {
     const result = await loginWithSocial({
       provider: "apple",
       sub: identity.sub,
-      email: identity.email || normalizeEmail(body.email),
+      email: identity.email,
       emailVerified: identity.emailVerified || Boolean(identity.email),
       name: identity.name || appleNameFromBody(body) || null,
       device: body.device
@@ -128,6 +168,7 @@ async function handle(req, res, url) {
   }
 
   if (req.method === "POST" && matchPath(pathname, "/api/auth/refresh")) {
+    limiter.consume("refresh", "refresh:" + limiter.clientIp(req));
     const body = await readJson(req);
     const tokens = await rotateRefresh(body.refreshToken, body.device);
     return ok(res, tokens);

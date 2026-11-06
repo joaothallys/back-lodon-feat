@@ -1,11 +1,16 @@
 const { one, many, camel, pool } = require("../../db/pool");
 const { ok, readJson, matchPath, required, httpError } = require("../../lib/http");
 const { requireUser } = require("../../lib/auth");
+const limiter = require("../../lib/rate-limit");
 const { generateFromAi } = require("./generate");
+
+const MAX_DAYS = 7;
+const MAX_FOCUS = 20;
+const MAX_EXERCISES_PER_DAY = 40;
 
 function normalizeExercises(list) {
   if (!Array.isArray(list)) return [];
-  return list.map((item, index) => ({
+  return list.filter(Boolean).slice(0, MAX_EXERCISES_PER_DAY).map((item, index) => ({
     position: item.position != null ? Number(item.position) : index,
     exerciseId: item.exerciseId,
     sets: Number(item.sets) || 3,
@@ -16,14 +21,15 @@ function normalizeExercises(list) {
 }
 
 async function insertDays(client, planId, days) {
-  for (const [index, day] of days.entries()) {
+  if (!Array.isArray(days)) throw httpError(400, "dias inválidos");
+  for (const [index, day] of days.slice(0, MAX_DAYS).entries()) {
     const created = (await client.query(
       `INSERT INTO workout_plan_days (plan_id, position, name)
        VALUES ($1, $2, $3)
        RETURNING *`,
       [planId, day.position != null ? day.position : index, day.name || ("Dia " + (index + 1))]
     )).rows[0];
-    for (const muscle of day.focus || []) {
+    for (const muscle of (Array.isArray(day.focus) ? day.focus : []).slice(0, MAX_FOCUS)) {
       await client.query(
         "INSERT INTO workout_plan_day_focus (day_id, muscle_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
         [created.id, String(muscle)]
@@ -119,6 +125,7 @@ async function handle(req, res, url) {
 
   if (req.method === "POST" && matchPath(pathname, "/api/plans/generate")) {
     const user = await requireUser(req);
+    limiter.consume("planGenerate", "plan:" + user.id);
     const body = await readJson(req);
     const generated = await generateFromAi(user, body);
     const client = await pool.connect();

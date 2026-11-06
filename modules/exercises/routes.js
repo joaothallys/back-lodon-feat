@@ -1,7 +1,8 @@
 const ExerciseDBService = require("./exercisedb-service");
 const repo = require("./repo");
-const { json, readBody, query, httpError } = require("../../lib/http");
-const { requireUser } = require("../../lib/auth");
+const { json, readBody, query } = require("../../lib/http");
+const { requireAdmin } = require("../../lib/auth");
+const limiter = require("../../lib/rate-limit");
 const { loadExerciseMedia } = require("../media/exercise-media");
 
 const listCache = { key: "", at: 0, payload: null };
@@ -19,12 +20,6 @@ const syncJob = {
   error: null,
   resumeCursor: null
 };
-
-async function requireAdmin(req) {
-  const user = await requireUser(req);
-  if (user.role !== "admin") throw httpError(403, "acesso restrito");
-  return user;
-}
 
 function clearListCache() {
   listCache.key = "";
@@ -216,7 +211,8 @@ async function handle(req, res, url) {
     try {
       const media = await loadExerciseMedia({
         q: item.originalName || item.name,
-        gender: q.gender
+        gender: q.gender,
+        beforeUpstream: () => limiter.consume("mediaUpstream", "media:" + limiter.clientIp(req))
       });
       if (!media) return json(res, 200, { success: true, data: item });
       return json(res, 200, {

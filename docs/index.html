@@ -129,7 +129,7 @@
         <div class="pills">
           <span class="pill">JWT + refresh</span>
           <span class="pill">Google / Apple Sign-In</span>
-          <span class="pill">MASTER_KEY nas rotas privadas</span>
+          <span class="pill">MASTER_KEY nas rotas de admin</span>
           <span class="pill">PostgreSQL</span>
           <span class="pill">CRUD de fichas</span>
           <span class="pill">Histórico ao finalizar</span>
@@ -143,9 +143,9 @@
         <p class="lead">
           Envie o access token em todas as rotas privadas.
           O access token expira em 15 minutos. Use <code>POST /api/auth/refresh</code> para renovar.
-          O admin mestre também pode usar a <code>MASTER_KEY</code> do <code>.env</code> no lugar do JWT — vale em qualquer rota privada e não expira.
+          Nas rotas <code>/api/admin/*</code>, o admin mestre também pode usar a <code>MASTER_KEY</code> do <code>.env</code>. Ela não vale nas demais rotas.
         </p>
-        <pre>Authorization: Bearer &lt;accessToken ou MASTER_KEY&gt;
+        <pre>Authorization: Bearer &lt;accessToken&gt;
 Content-Type: application/json</pre>
         <div class="grid">
           <div class="card">
@@ -584,7 +584,7 @@ content.innerHTML = groups.map((g) => `
       <p><strong>kcal:</strong> round(durationMin × 5.5 + volumeKg × 0.035), ou o valor enviado no complete.</p>
       <p><strong>Plano ativo:</strong> só um is_active = true por usuário.</p>
       <p><strong>Sessão aberta:</strong> só uma in_progress por usuário. Finalizar libera essa vaga.</p>
-      <p><strong>Admin mestre:</strong> e-mail no .env (MASTER_EMAIL) ou Authorization: Bearer MASTER_KEY em qualquer rota privada.</p>
+      <p><strong>Admin mestre:</strong> e-mail no .env (MASTER_EMAIL) ou Authorization: Bearer MASTER_KEY nas rotas /api/admin/*.</p>
       <p><strong>Social login:</strong> <code>GOOGLE_CLIENT_IDS</code> (Android/iOS/Web) e <code>APPLE_CLIENT_IDS</code> (Bundle ID / Services ID). Sem isso, /api/auth/google e /api/auth/apple respondem 503.</p>
       <p><strong>Gráficos:</strong> sem tabela de stats. GET /api/progress agrega sessões. Volume = kg × reps, type ≠ W. exerciseId = catálogo London.</p>
     </div>

@@ -8,6 +8,8 @@ const SET_TYPES = new Set(["W", "N", "D", "S"]);
 
 // Treino esquecido aberto por dias não pode virar 17 mil minutos.
 const MAX_DURATION_MIN = 600;
+const MAX_EXERCISES = 60;
+const MAX_SETS = 40;
 
 function calcCalories(durationMin, volumeKg) {
   return Math.max(0, Math.round((Number(durationMin) || 0) * 5.5 + (Number(volumeKg) || 0) * 0.035));
@@ -81,10 +83,14 @@ function sessionFinishStatus(exercises) {
   return "partial";
 }
 
+function limited(list, max) {
+  return Array.isArray(list) ? list.filter(Boolean).slice(0, max) : [];
+}
+
 function normalizeExercises(exercises) {
-  return (exercises || []).map((exercise, index) => {
+  return limited(exercises, MAX_EXERCISES).map((exercise, index) => {
     const sets = Array.isArray(exercise.sets)
-      ? exercise.sets.map((set, setIndex) => ({
+      ? limited(exercise.sets, MAX_SETS).map((set, setIndex) => ({
         type: asSetType(set.type),
         kg: Number(set.kg) || 0,
         reps: Number(set.reps) || 0,
@@ -103,9 +109,11 @@ function normalizeExercises(exercises) {
 }
 
 function templateToExercises(exercises) {
-  return (exercises || []).map((exercise) => {
-    if (Array.isArray(exercise.sets) && exercise.sets.length) return exercise;
-    const count = Number(exercise.setsCount || exercise.sets) || 3;
+  return limited(exercises, MAX_EXERCISES).map((exercise) => {
+    if (Array.isArray(exercise.sets) && exercise.sets.length) {
+      return { ...exercise, sets: limited(exercise.sets, MAX_SETS) };
+    }
+    const count = Math.min(MAX_SETS, Number(exercise.setsCount || exercise.sets) || 3);
     return {
       ...exercise,
       sets: Array.from({ length: count }, () => ({
@@ -208,8 +216,7 @@ async function copyFromSource(userId, sourceType, sourceId) {
 }
 
 async function touchRecovery(userId, muscles) {
-  const items = Array.isArray(muscles) ? muscles : [];
-  for (const muscle of items) {
+  for (const muscle of limited(muscles, MAX_EXERCISES)) {
     await one(
       `INSERT INTO muscle_recovery (user_id, muscle_id, last_trained_at)
        VALUES ($1, $2, now())

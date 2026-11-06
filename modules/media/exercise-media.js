@@ -1,10 +1,11 @@
 const v2 = require("../exercises/v2");
 const repo = require("../exercises/repo");
 
-async function loadExerciseMedia({ q, gender, exerciseId }) {
+async function loadExerciseMedia({ q, gender, exerciseId, beforeUpstream }) {
   const key = [exerciseId || "", String(q || "").trim().toLowerCase(), v2.mapGender(gender)].join("|");
   const cached = repo.getMediaV2(key);
   if (cached) return { ...cached, cached: true };
+  if (beforeUpstream) beforeUpstream();
   const media = await v2.findMedia({ q, gender, exerciseId });
   if (!media) return null;
   repo.setMediaV2(key, media);

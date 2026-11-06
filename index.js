@@ -5,6 +5,7 @@ const path = require("node:path");
 const { loadEnv } = require("./load-env");
 const { CORS, json, fail, applyCors } = require("./lib/http");
 const { log } = require("./lib/logger");
+const limiter = require("./lib/rate-limit");
 
 loadEnv(".env");
 
@@ -30,10 +31,17 @@ const modules = [
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
 const DOCS_PATH = path.join(__dirname, "docs", "index.html");
+const REQUEST_TIMEOUT_MS = 30_000;
+const SECURITY_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "Strict-Transport-Security": "max-age=15552000; includeSubDomains",
+  "Referrer-Policy": "no-referrer",
+  "Cache-Control": "no-store"
+};
 
 function requestId(req) {
   const incoming = req.headers["x-request-id"];
-  if (incoming && String(incoming).length < 80) return String(incoming);
+  if (/^[\w-]{1,80}$/.test(String(incoming || ""))) return String(incoming);
   return crypto.randomUUID().slice(0, 8);
 }
 
@@ -84,13 +92,14 @@ const server = http.createServer(async (req, res) => {
   try {
     url = new URL(req.url, "http://" + (req.headers.host || "localhost"));
     watchResponse(req, res, url);
+    Object.entries(SECURITY_HEADERS).forEach(([key, value]) => res.setHeader(key, value));
     if (req.method === "OPTIONS") {
       applyCors(req, res);
       res.writeHead(204, CORS);
       res.end();
       return;
     }
-    if (req.method === "GET" && (url.pathname === "/docs" || url.pathname === "/docs/")) {
+    if (process.env.DOCS_PUBLIC === "true" && req.method === "GET" && (url.pathname === "/docs" || url.pathname === "/docs/")) {
       return sendDocs(res);
     }
     if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) {
@@ -103,12 +112,16 @@ const server = http.createServer(async (req, res) => {
       }
       return json(res, db ? 200 : 503, { ok: db, db, service: "london-fitness-api" });
     }
-    if (url.pathname.startsWith("/api/")) return await handleApi(req, res, url);
+    if (url.pathname.startsWith("/api/")) {
+      limiter.consume("global", "global:" + limiter.clientIp(req));
+      return await handleApi(req, res, url);
+    }
     json(res, 404, { success: false, error: "not found" });
   } catch (err) {
     const id = res.requestId;
     if (err.status) {
       log.warn("request.fail", { requestId: id, path: url && url.pathname, ...log.errFields(err) });
+      if (err.retryAfterSec) res.setHeader("Retry-After", err.retryAfterSec);
       return fail(res, err.status, err.message);
     }
     const down = err.code === "ENOTFOUND" || err.code === "ECONNREFUSED" || err.code === "ETIMEDOUT";
@@ -116,6 +129,9 @@ const server = http.createServer(async (req, res) => {
     fail(res, down ? 503 : 500, down ? "banco indisponível" : "server error");
   }
 });
+
+server.requestTimeout = REQUEST_TIMEOUT_MS;
+server.headersTimeout = REQUEST_TIMEOUT_MS;
 
 process.on("unhandledRejection", (err) => {
   log.error("unhandledRejection", log.errFields(err));

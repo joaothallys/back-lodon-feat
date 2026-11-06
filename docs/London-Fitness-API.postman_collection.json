@@ -218,11 +218,11 @@
               "raw": "{\n  \"email\": \"{{masterEmail}}\",\n  \"password\": \"{{masterPassword}}\",\n  \"device\": \"postman\"\n}"
             },
             "url": "{{baseUrl}}/api/auth/login",
-            "description": "Login do admin mestre. Também dá para pular o login e usar Authorization: Bearer {{masterKey}} em qualquer rota privada."
+            "description": "Login do admin mestre. A MASTER_KEY vale só nas rotas /api/admin/*."
           }
         },
         {
-          "name": "Me (chave mestre)",
+          "name": "Status da sincronização (chave mestre)",
           "request": {
             "auth": {
               "type": "bearer",
@@ -230,8 +230,8 @@
             },
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/api/auth/me",
-            "description": "Usa MASTER_KEY direto, sem JWT. Vale para qualquer rota privada."
+            "url": "{{baseUrl}}/api/admin/exercises/sync/status",
+            "description": "Usa MASTER_KEY direto, sem JWT. Vale só nas rotas /api/admin/*."
           }
         },
         {

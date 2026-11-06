@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "node index.js",
     "start": "node index.js",
-    "migrate": "node db/migrate.js"
+    "migrate": "node db/migrate.js",
+    "test": "node --test \"tests/*.test.js\""
   },
   "dependencies": {
-    "bcrypt": "^5.1.1",
+    "bcrypt": "^6.0.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3"
   }
