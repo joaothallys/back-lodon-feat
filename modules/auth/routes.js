@@ -16,6 +16,7 @@ const {
 } = require("../../lib/auth");
 const { verifyGoogleToken, verifyAppleIdentityToken } = require("../../lib/oauth");
 const limiter = require("../../lib/rate-limit");
+const { notifySignup } = require("../../lib/discord");
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const NAME_MAX = 80;
@@ -89,6 +90,7 @@ async function handle(req, res, url) {
       await createDefaultMembership(client, user.id);
       await client.query("COMMIT");
       const tokens = await createSession(user, body.device);
+      notifySignup({ name, email, provider: "email" });
       return ok(res, { data: await publicUser(user), ...tokens }, 201);
     } catch (err) {
       await client.query("ROLLBACK");
@@ -137,6 +139,13 @@ async function handle(req, res, url) {
       name: identity.name || body.name || null,
       device: body.device
     });
+    if (result.created) {
+      notifySignup({
+        name: identity.name || body.name,
+        email: result.user.email,
+        provider: "google"
+      });
+    }
     return ok(res, {
       created: result.created,
       message: result.message,
@@ -151,14 +160,22 @@ async function handle(req, res, url) {
     const identityToken = body.identityToken || body.identity_token || body.idToken || "";
     if (!identityToken) throw httpError(400, "identityToken é obrigatório");
     const identity = await verifyAppleIdentityToken(identityToken, body.nonce);
+    const appleName = identity.name || appleNameFromBody(body) || null;
     const result = await loginWithSocial({
       provider: "apple",
       sub: identity.sub,
       email: identity.email,
       emailVerified: identity.emailVerified || Boolean(identity.email),
-      name: identity.name || appleNameFromBody(body) || null,
+      name: appleName,
       device: body.device
     });
+    if (result.created) {
+      notifySignup({
+        name: appleName,
+        email: result.user.email,
+        provider: "apple"
+      });
+    }
     return ok(res, {
       created: result.created,
       message: result.message,
