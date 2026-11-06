@@ -8,6 +8,27 @@ const MAX_DAYS = 7;
 const MAX_FOCUS = 20;
 const MAX_EXERCISES_PER_DAY = 40;
 
+function normalizeWeekdays(list) {
+  if (!Array.isArray(list)) return [];
+  const seen = new Set();
+  const out = [];
+  list.forEach((raw) => {
+    const n = Number(raw);
+    if (!Number.isInteger(n) || n < 0 || n > 6 || seen.has(n)) return;
+    seen.add(n);
+    out.push(n);
+  });
+  return out;
+}
+
+async function planDaysStoreWeekdays(client) {
+  const column = await client.query(
+    `SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = 'workout_plan_days' AND column_name = 'weekdays'`
+  );
+  return column.rowCount > 0;
+}
+
 function normalizeExercises(list) {
   if (!Array.isArray(list)) return [];
   return list.filter(Boolean).slice(0, MAX_EXERCISES_PER_DAY).map((item, index) => ({
@@ -22,13 +43,23 @@ function normalizeExercises(list) {
 
 async function insertDays(client, planId, days) {
   if (!Array.isArray(days)) throw httpError(400, "dias inválidos");
+  const withWeekdays = await planDaysStoreWeekdays(client);
   for (const [index, day] of days.slice(0, MAX_DAYS).entries()) {
-    const created = (await client.query(
-      `INSERT INTO workout_plan_days (plan_id, position, name)
-       VALUES ($1, $2, $3)
-       RETURNING *`,
-      [planId, day.position != null ? day.position : index, day.name || ("Dia " + (index + 1))]
-    )).rows[0];
+    const position = day.position != null ? day.position : index;
+    const name = day.name || ("Dia " + (index + 1));
+    const created = withWeekdays
+      ? (await client.query(
+        `INSERT INTO workout_plan_days (plan_id, position, name, weekdays)
+         VALUES ($1, $2, $3, $4::smallint[])
+         RETURNING *`,
+        [planId, position, name, normalizeWeekdays(day.weekdays)]
+      )).rows[0]
+      : (await client.query(
+        `INSERT INTO workout_plan_days (plan_id, position, name)
+         VALUES ($1, $2, $3)
+         RETURNING *`,
+        [planId, position, name]
+      )).rows[0];
     for (const muscle of (Array.isArray(day.focus) ? day.focus : []).slice(0, MAX_FOCUS)) {
       await client.query(
         "INSERT INTO workout_plan_day_focus (day_id, muscle_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
